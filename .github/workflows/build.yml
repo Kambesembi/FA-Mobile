@@ -1,0 +1,98 @@
+name: Build APK
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ['**.md']
+  workflow_dispatch:
+    inputs:
+      screens:
+        description: Also take the emulator screenshots (about 25 minutes)
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Signing key
+        env:
+          KEY: ${{ secrets.SIGNING_KEYSTORE_B64 }}
+        run: |
+          BASE=$(sed -n 's/^fa.runBase=//p' gradle.properties)
+          PATCH=$(( GITHUB_RUN_NUMBER - ${BASE:-0} )); [ "$PATCH" -lt 0 ] && PATCH=0
+          echo "VERSION=0.$(sed -n 's/^fa.iteration=//p' gradle.properties).$PATCH" >> "$GITHUB_ENV"
+          if [ -n "$KEY" ]; then
+            mkdir -p signing
+            echo "$KEY" | base64 -d > signing/famobile.p12
+            echo "SIGNED=1" >> "$GITHUB_ENV"
+          else
+            echo "::warning::No SIGNING_KEYSTORE_B64 secret, so this build uses a temporary key and is not published as a release."
+          fi
+      - name: Test and build
+        env:
+          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+        run: gradle --no-daemon testDebugUnitTest assembleDebug assembleRelease
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: test-reports
+          path: app/build/reports/tests
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apks
+          path: |
+            app/build/outputs/apk/release/app-release.apk
+            app/build/outputs/apk/debug/app-debug.apk
+      - name: Publish release
+        if: env.SIGNED == '1'
+        run: cp app/build/outputs/apk/release/app-release.apk "FA-Mobile-${VERSION}.apk"
+      - uses: softprops/action-gh-release@v2
+        if: env.SIGNED == '1'
+        with:
+          tag_name: v${{ env.VERSION }}
+          name: FA Mobile ${{ env.VERSION }}
+          files: FA-Mobile-${{ env.VERSION }}.apk
+
+  # The emulator tour takes about 25 minutes, so it runs only when asked: a manual run with "screens",
+  # or a commit message containing [screens].
+  screenshots:
+    needs: build
+    if: (github.event_name == 'workflow_dispatch' && inputs.screens) || contains(github.event.head_commit.message, '[screens]')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: apks
+          path: app/build/outputs/apk
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Run on emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          script: bash scripts/ci-screens.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: screens
+          path: screens

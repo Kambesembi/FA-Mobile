@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- Hand-built test page: the header structure of FA's modern theme as seen on 2026-11-04,
+     with made-up account data. -->
+<head>
+<meta charset="utf-8">
+<title>Account Settings -- Fur Affinity [dot] net</title>
+</head>
+<body id="pageid-controls-settings" class="c-bodyColor" data-user-logged-in="1" data-tag-blocklist="gore  Vore" data-tag-blocklist-nonce="testkey" data-user-blocklist="Some.Artist" data-tag-blocklist-hide-tagless="1">
+<div class="sfw-toggle"><input type="checkbox" id="sfw-toggle-mobile" checked></div>
+<nav id="ddmenu">
+  <div class="mobile-nav navhideondesktop hideonmobile hideontablet">
+    <div class="mobile-nav-logo"><a href="/"><img class="site-logo" src="/themes/beta/img/banners/fa_logo.png" alt=""></a></div>
+  </div>
+  <ul class="navhideonmobile">
+    <li class="lileft"><a class="top-heading" href="/browse/">Browse</a></li>
+    <li class="lileft"><a class="top-heading" href="/search/">Search</a></li>
+    <li class="message-bar-desktop">
+      <a class="notification-container inline" href="/msg/submissions/" title="1,204 Submission Notifications">1,204S</a>
+      <a class="notification-container inline" href="/msg/others/#watches" title="3 Watch Notifications">3W</a>
+      <a class="notification-container inline" href="/msg/others/#comments" title="12 Comment Notifications">12C</a>
+      <a class="notification-container inline" href="/msg/others/#favorites" title="27 Favorite Notifications">27F</a>
+      <a class="notification-container inline" href="/msg/others/#journals" title="2 Journal Notifications">2J</a>
+      <a class="notification-container inline" href="/msg/pms/" title="4 Unread Notes">4N</a>
+    </li>
+    <li class="floatleft hideonmobile">
+      <a href="/user/testuser/"><img class="loggedin_user_avatar menubar-icon-resize avatar" alt="TestUser" src="//a.furaffinity.net/1700000000/testuser.gif"></a>
+    </li>
+    <li class="submenu-trigger">
+      <a id="my-username" class="top-heading hideonmobile" href="/user/testuser/">My FA ( TestUser )</a>
+      <div class="dropdown dropdown-right">
+        <a href="/user/testuser/">Userpage</a>
+        <a href="/msg/pms/">Notes</a>
+        <a href="/controls/journal/">Journals</a>
+      </div>
+    </li>
+  </ul>
+</nav>
+<div class="mobile-notification-bar">
+  <a class="notification-container inline" href="/msg/submissions/" title="1,204 Submission Notifications">1,204S</a>
+  <a class="notification-container inline" href="/msg/others/#watches" title="3 Watch Notifications">3W</a>
+  <a class="notification-container inline" href="/msg/others/#comments" title="12 Comment Notifications">12C</a>
+  <a class="notification-container inline" href="/msg/others/#favorites" title="27 Favorite Notifications">27F</a>
+  <a class="notification-container inline" href="/msg/others/#journals" title="2 Journal Notifications">2J</a>
+  <a class="notification-container inline" href="/msg/pms/" title="4 Unread Notes">4N</a>
+</div>
+<div class="mobile-navigation">
+  <div class="nav-ac-container">
+    <article class="nav-ac-content">
+      <div class="mobile-nav-content-container">
+        <div class="aligncenter"><h2><a href="/user/testuser/">TestUser</a></h2></div>
+      </div>
+    </article>
+  </div>
+</div>
+<div id="main-window" class="footer-mobile-tweak">
+  <section class="aligncenter"><div class="section-body">Account settings</div></section>
+</div>
+
+<div id="columnpage">
+<form method="post" action="/controls/settings/">
+  <div class="control-panel-item-container"><h4>Enable Adult Artwork</h4>
+    <select name="viewmature"><option value="0">General</option><option value="1">General, Mature</option><option value="2" selected="selected">General, Mature, Adult</option></select></div>
+  <div class="control-panel-item-container"><h4>Time Zone</h4>
+    <select name="timezone"><option value="-1">UTC -0100</option><option value="1" selected="selected">UTC +0100</option></select>
+    <label><input type="checkbox" name="timezone_dst" checked="checked"> Daylight saving</label></div>
+  <div class="control-panel-item-container"><h4>Site Layout/Theme</h4>
+    <select name="style"><option value="modern" selected="selected">Modern</option><option value="classic">Classic</option></select>
+    <select name="stylesheet"><option value="dark" selected="selected">Dark</option><option value="light">Light</option></select></div>
+  <input type="password" name="oldpassword" value="">
+</form>
+<form method="post" action="/controls/site-settings/">
+  <div class="control-panel-item-container"><h4>Time Format</h4>
+    <div class="control-panel-item-options"><input type="radio" id="hf12" name="hour_format" value="12"><label for="hf12">12 hour</label>
+    <input type="radio" id="hf24" name="hour_format" value="24" checked="checked"><label for="hf24">24 hour</label></div></div>
+  <div class="control-panel-item-container"><h4>Submissions Per Page</h4>
+    <select name="perpage"><option value="24">24</option><option value="48">48</option><option value="72" selected="selected">72</option></select></div>
+  <div class="control-panel-item-container"><h4>Search Ratings</h4>
+    <label><input type="checkbox" name="search_rating_general" checked="checked"> General</label>
+    <label><input type="checkbox" name="search_rating_mature" checked="checked"> Mature</label>
+    <label><input type="checkbox" name="search_rating_adult"> Adult</label></div>
+</form>
+<form method="post" action="/controls/user-settings/">
+  <div class="control-panel-item-container"><h4>Accepting Commissions</h4>
+    <div class="control-panel-item-options"><input type="radio" id="ac1" name="accept_commissions" value="1" checked="checked"><label for="ac1">Yes</label>
+    <input type="radio" id="ac0" name="accept_commissions" value="0"><label for="ac0">No</label></div></div>
+</form>
+<form method="post" action="/controls/profile/">
+  <div class="control-panel-item-container"><h4>Update User Profile</h4>
+    <textarea name="profileinfo">Hi! I draw [b]dragons[/b] and the occasional cat.
+Commissions are open.</textarea></div>
+  <div class="control-panel-item-container"><h4>Species</h4><input type="text" name="species" value="Red panda"></div>
+  <div class="control-panel-item-container"><h4>Mood</h4>
+    <select name="mood"><option value="amused">amused</option><option value="sleepy" selected="selected">sleepy</option></select></div>
+  <div class="control-panel-item-container"><h4>Manage Blocked Users</h4><textarea name="blocklist">artist9
+artist10</textarea></div>
+  <div class="control-panel-item-container"><h4>Hide Content Without Tags</h4>
+    <select name="hide_missing_tags"><option value="0">Show Content Without Tags</option><option value="1" selected="selected">Hide Content Without Tags</option></select></div>
+  <input type="text" name="quote" value="">
+</form>
+<form method="post" action="/controls/contacts/">
+  <div class="control-panel-item-container"><h4>Website</h4><input type="text" name="website" value="https://example.com/testuser"></div>
+  <div class="control-panel-item-container"><h4>Bluesky</h4><input type="text" name="bluesky" value="testuser.example"></div>
+  <div class="control-panel-item-container"><h4>Twitch</h4><input type="text" name="twitch" value=""></div>
+</form>
+</div>
+</body>
+</html>

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- Hand-built test page: the header structure of FA's modern theme as seen on 2026-11-04,
+     with made-up account data. -->
+<head>
+<meta charset="utf-8">
+<title>Account Settings -- Fur Affinity [dot] net</title>
+</head>
+<body id="pageid-messagecenter-others" class="c-bodyColor">
+<nav id="ddmenu">
+  <div class="mobile-nav navhideondesktop hideonmobile hideontablet">
+    <div class="mobile-nav-logo"><a href="/"><img class="site-logo" src="/themes/beta/img/banners/fa_logo.png" alt=""></a></div>
+  </div>
+  <ul class="navhideonmobile">
+    <li class="lileft"><a class="top-heading" href="/browse/">Browse</a></li>
+    <li class="lileft"><a class="top-heading" href="/search/">Search</a></li>
+    <li class="message-bar-desktop">
+      <a class="notification-container inline" href="/msg/submissions/" title="1,204 Submission Notifications">1,204S</a>
+      <a class="notification-container inline" href="/msg/others/#watches" title="3 Watch Notifications">3W</a>
+      <a class="notification-container inline" href="/msg/others/#comments" title="12 Comment Notifications">12C</a>
+      <a class="notification-container inline" href="/msg/others/#favorites" title="27 Favorite Notifications">27F</a>
+      <a class="notification-container inline" href="/msg/others/#journals" title="2 Journal Notifications">2J</a>
+      <a class="notification-container inline" href="/msg/pms/" title="4 Unread Notes">4N</a>
+    </li>
+    <li class="floatleft hideonmobile">
+      <a href="/user/testuser/"><img class="loggedin_user_avatar menubar-icon-resize avatar" alt="TestUser" src="//a.furaffinity.net/1700000000/testuser.gif"></a>
+    </li>
+    <li class="submenu-trigger">
+      <a id="my-username" class="top-heading hideonmobile" href="/user/testuser/">My FA ( TestUser )</a>
+      <div class="dropdown dropdown-right">
+        <a href="/user/testuser/">Userpage</a>
+        <a href="/msg/pms/">Notes</a>
+        <a href="/controls/journal/">Journals</a>
+      </div>
+    </li>
+  </ul>
+</nav>
+<div class="mobile-notification-bar">
+  <a class="notification-container inline" href="/msg/submissions/" title="1,204 Submission Notifications">1,204S</a>
+  <a class="notification-container inline" href="/msg/others/#watches" title="3 Watch Notifications">3W</a>
+  <a class="notification-container inline" href="/msg/others/#comments" title="12 Comment Notifications">12C</a>
+  <a class="notification-container inline" href="/msg/others/#favorites" title="27 Favorite Notifications">27F</a>
+  <a class="notification-container inline" href="/msg/others/#journals" title="2 Journal Notifications">2J</a>
+  <a class="notification-container inline" href="/msg/pms/" title="4 Unread Notes">4N</a>
+</div>
+<div class="mobile-navigation">
+  <div class="nav-ac-container">
+    <article class="nav-ac-content">
+      <div class="mobile-nav-content-container">
+        <div class="aligncenter"><h2><a href="/user/testuser/">TestUser</a></h2></div>
+      </div>
+    </article>
+  </div>
+</div>
+<div id="main-window" class="footer-mobile-tweak">
+<!-- Hand-built. The journals section follows FA's markup as checked on 2026-11-04; the other sections
+     are assumed to follow the same pattern and still need checking against a real page. -->
+<form id="messages-form" method="post" action="/msg/others/">
+<section id="messages-watches" class="section_container">
+  <div class="section-header">
+    <div class="highlight">Watches</div>
+    <div class="section_controls">
+      <button class="button standard mark-all" type="button" value="Select All">Select All</button>
+      <button class="button standard stop remove" type="submit" value="Remove Selected Watches" name="remove-watches">Remove</button>
+      <button class="button standard nuke" type="submit" name="nuke-watches" value="Nuke Watches"><svg class="svg-icon"></svg></button>
+    </div>
+    <a name="watches"></a>
+  </div>
+  <div class="section-body">
+    <ul class="message-stream">
+      <li><div class="table"><div class="cell message-center-checkbox"><input type="checkbox" name="watches[]" value="90000001"></div><div class="cell user-submitted-links"><a href="/user/artist2/"><img class="avatar" alt="artist2" src="//a.furaffinity.net/1700000000/artist2.gif"></a> <span class="c-usernameBlockSimple username-underlined"><a href="/user/artist2/"><span class="c-usernameBlockSimple__displayName" title="artist2">artist2</span></a></span> <span class="hideonmobile font-small floatright"><span class="popup_date" data-title-date="1" data-24-hour="0" data-time="1793800000" title="November 4, 2026">2 hours ago</span></span></div></div></li>
+      <li><div class="table"><div class="cell message-center-checkbox"><input type="checkbox" name="watches[]" value="90000002"></div><div class="cell user-submitted-links"><a href="/user/artist3/"><img class="avatar" alt="artist3" src="//a.furaffinity.net/1700000000/artist3.gif"></a> <span class="c-usernameBlockSimple username-underlined"><a href="/user/artist3/"><span class="c-usernameBlockSimple__displayName" title="artist3">artist3</span></a></span> <span class="hideonmobile font-small floatright"><span class="popup_date" data-title-date="1" data-24-hour="0" data-time="1793700000" title="November 4, 2026">a day ago</span></span></div></div></li>
+    </ul>
+  </div>
+</section>
+<section id="messages-comments-submission" class="section_container">
+  <div class="section-header">
+    <div class="highlight">Submission Comments</div>
+    <div class="section_controls">
+      <button class="button standard mark-all" type="button" value="Select All">Select All</button>
+      <button class="button standard stop remove" type="submit" value="Remove Selected Submission Comments" name="remove-submission-comments">Remove</button>
+      <button class="button standard nuke" type="submit" name="nuke-submission-comments" value="Nuke Submission Comments"><svg class="svg-icon"></svg></button>
+    </div>
+    <a name="comments-submission"></a>
+  </div>
+  <div class="section-body">
+    <ul class="message-stream">
+      <li><div class="table"><div class="cell message-center-checkbox"><input type="checkbox" name="comments-submissions[]" value="194319437"></div><div class="cell user-submitted-links"><span class="c-usernameBlockSimple username-underlined"><a href="/user/artist4/"><span class="c-usernameBlockSimple__displayName" title="artist4">artist4</span></a></span> commented on <a href="/view/10000610/#cid:194319437">Submission 10000610</a> <span class="hideonmobile font-small floatright"><span class="popup_date" data-title-date="1" data-24-hour="0" data-time="1793805000" title="November 4, 2026">an hour ago</span></span></div></div></li>
+    </ul>
+  </div>
+</section>
+<section id="messages-comments-journal" class="section_container">
+  <div class="section-header">
+    <div class="highlight">Journal Comments</div>
+    <div class="section_controls">
+      <button class="button standard mark-all" type="button" value="Select All">Select All</button>
+      <button class="button standard stop remove" type="submit" value="Remove Selected Journal Comments" name="remove-journal-comments">Remove</button>
+      <button class="button standard nuke" type="submit" name="nuke-journal-comments" value="Nuke Journal Comments"><svg class="svg-icon"></svg></button>
+    </div>
+    <a name="comments-journal"></a>
+  </div>
+  <div class="section-body">
+    <ul class="message-stream">
+      <li><div class="table"><div class="cell message-center-checkbox"><input type="checkbox" name="comments-journals[]" value="60000001"></div><div class="cell user-submitted-links"><span class="c-usernameBlockSimple username-underlined"><a href="/user/artist5/"><span class="c-usernameBlockSimple__displayName" title="artist5">artist5</span></a></span> commented on <a href="/journal/11451636/#cid:60000001">Journal title</a> <span class="hideonmobile font-small floatright"><span class="popup_date" data-title-date="1" data-24-hour="0" data-time="1793760000" title="November 4, 2026">12 hours ago</span></span></div></div></li>
+    </ul>
+  </div>
+</section>
+<section id="messages-favorites" class="section_container">
+  <div class="section-header">
+    <div class="highlight">Favorites</div>
+    <div class="section_controls">
+      <button class="button standard mark-all" type="button" value="Select All">Select All</button>
+      <button class="button standard stop remove" type="submit" value="Remove Selected Favorites" name="remove-favorites">Remove</button>
+      <button class="button standard nuke" type="submit" name="nuke-favorites" value="Nuke Favorites"><svg class="svg-icon"></svg></button>
+    </div>
+    <a name="favorites"></a>
+  </div>
+  <div class="section-body">
+    <ul class="message-stream">
+      <li><div class="table"><div class="cell message-center-checkbox"><input type="checkbox" name="favorites[]" value="80000001"></div><div class="cell user-submitted-links"><span class="c-usernameBlockSimple username-underlined"><a href="/user/artist6/"><span class="c-usernameBlockSimple__displayName" title="artist6">artist6</span></a></span> favorited <a href="/view/10000350/">Submission 10000350</a> <span class="hideonmobile font-small floatright"><span class="popup_date" data-title-date="1" data-24-hour="0" data-time="1793806000" title="November 4, 2026">40 minutes ago</span></span></div></div></li>
+      <li><div class="table"><div class="cell message-center-checkbox"><input type="checkbox" name="favorites[]" value="80000002"></div><div class="cell user-submitted-links"><span class="c-usernameBlockSimple username-underlined"><a href="/user/artist7/"><span class="c-usernameBlockSimple__displayName" title="artist7">artist7</span></a></span> favorited <a href="/view/10000610/">Submission 10000610</a> <span class="hideonmobile font-small floatright"><span class="popup_date" data-title-date="1" data-24-hour="0" data-time="1793790000" title="November 4, 2026">5 hours ago</span></span></div></div></li>
+    </ul>
+  </div>
+</section>
+<section id="messages-journals" class="section_container">
+  <div class="section-header">
+    <div class="highlight">Journals</div>
+    <div class="section_controls">
+      <button class="button standard mark-all" type="button" value="Select All">Select All</button>
+      <button class="button standard stop remove" type="submit" value="Remove Selected Journals" name="remove-journals">Remove</button>
+      <button class="button standard nuke" type="submit" name="nuke-journals" value="Nuke Journals"><svg class="svg-icon"></svg></button>
+    </div>
+    <a name="journals"></a>
+  </div>
+  <div class="section-body">
+    <ul class="message-stream">
+      <li><div class="table"><div class="cell message-center-journal-checkbox"><input type="checkbox" name="journals[]" value="11451636"></div><div class="cell user-submitted-links"><a href="/journal/11451636/"><em class="journal_subject">Journal title</em></a>, <span class="c-contentRating--general" alt="General" title="General">General</span><br class="hideondesktop"> posted by <span class="c-usernameBlockSimple username-underlined"><a href="/user/artist8/"><span class="c-usernameBlockSimple__displayName" title="artist8">artist8</span></a></span><span class="hideonmobile font-small floatright"><span class="popup_date" data-title-date="1" data-24-hour="0" data-time="1793780000" title="November 4, 2026">7 hours ago</span></span></div></div></li>
+    </ul>
+  </div>
+</section>
+<section id="section-global-controls">
+  <div class="section-header">
+    <div class="highlight">Global Selection</div>
+    <div class="global_controls">
+      <button class="button standard mark-all" type="button" value="Select All">Select All</button>
+      <button class="button standard stop remove" type="submit" value="Remove Selected" name="remove-all">Remove Selected</button>
+    </div>
+  </div>
+</section>
+</form>
+</div>
+</body>
+</html>
