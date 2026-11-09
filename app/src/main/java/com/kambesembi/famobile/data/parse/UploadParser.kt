@@ -173,7 +173,10 @@ object UploadParser {
                 .map { it.text().trim() }
                 .firstOrNull { it.isNotEmpty() }
 
-    /** The account's gallery folders, from its gallery page, each under the heading above it. */
+    /**
+     * The account's gallery folders, from its gallery page, each under the heading above it. Folders
+     * in no group sit in FA's `ul.default-group`, wherever that list comes, and get no heading.
+     */
     fun galleryFolders(doc: Document): List<FilterOption> {
         val out = mutableListOf<FilterOption>()
         for (box in doc.select(".user-folders")) {
@@ -184,7 +187,7 @@ object UploadParser {
                     continue
                 }
                 val id = folderLink.find(e.attr("href"))?.groupValues?.get(1) ?: continue
-                out += FilterOption(id, e.text().trim(), group)
+                out += FilterOption(id, e.text().trim(), if (e.closest("ul.default-group") != null) null else group)
             }
         }
         return out.distinctBy { it.value }

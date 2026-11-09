@@ -310,7 +310,7 @@ fun SettingsScreen(
                 }
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 6.dp)) {
                     (update as? UpdateState.Available)?.release?.let { release ->
-                        Button(onClick = { context.openExternally(release.apkUrl ?: release.pageUrl) }) {
+                        Button(onClick = { updates.offer(release) }) {
                             Text(stringResource(R.string.update_download))
                         }
                         Spacer(Modifier.width(8.dp))

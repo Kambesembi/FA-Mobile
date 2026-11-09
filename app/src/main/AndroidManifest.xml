@@ -7,6 +7,9 @@
     <!-- Uploads keep going with the app closed, with their progress in a notification. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <!-- Updates from the app's GitHub releases, installed over the app itself. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION" />
 
     <application
         android:name=".FaApp"
@@ -55,6 +58,11 @@
                 <data android:mimeType="text/rtf" />
             </intent-filter>
         </activity>
+
+        <!-- What Android's package installer says about an update. -->
+        <receiver
+            android:name=".data.update.InstallReceiver"
+            android:exported="false" />
 
         <!-- WorkManager's own service, told what the upload's foreground work is for. -->
         <service
