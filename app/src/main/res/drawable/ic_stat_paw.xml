@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The launcher paw, cropped for the status bar (only its shape is used there). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="54"
+    android:viewportHeight="54">
+    <group
+        android:translateX="-27"
+        android:translateY="-25">
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M54,52c-9.5,0 -17,7.5 -17,14.5c0,7 6.5,10.5 17,10.5s17,-3.5 17,-10.5c0,-7 -7.5,-14.5 -17,-14.5z" />
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M29.5,47a6.5,7.5 0,1 0,13 0a6.5,7.5 0,1 0,-13 0z" />
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M40.5,35.5a6.8,8 0,1 0,13.6 0a6.8,8 0,1 0,-13.6 0z" />
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M53.9,35.5a6.8,8 0,1 0,13.6 0a6.8,8 0,1 0,-13.6 0z" />
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M65.5,47a6.5,7.5 0,1 0,13 0a6.5,7.5 0,1 0,-13 0z" />
+    </group>
+</vector>

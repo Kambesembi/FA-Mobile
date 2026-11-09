@@ -1,0 +1,15 @@
+# Personal data from the FA account: raw saved pages, cookies, logs. Never commit.
+/local/
+
+.gradle/
+build/
+/captures/
+local.properties
+*.iml
+.idea/
+.DS_Store
+
+# Release signing key, decoded from the SIGNING_KEYSTORE_B64 secret in CI.
+/signing/
+
+__pycache__/
