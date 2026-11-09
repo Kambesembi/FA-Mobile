@@ -1,11 +1,13 @@
 package com.kambesembi.famobile.data.update
 
 import android.app.PendingIntent
+import android.content.ActivityNotFoundException
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageInstaller
 import android.os.Build
+import androidx.core.content.FileProvider
 import androidx.core.content.pm.PackageInfoCompat
 import com.kambesembi.famobile.BuildConfig
 import com.kambesembi.famobile.FaApp
@@ -62,6 +64,7 @@ class Installer(private val context: Context, private val scope: CoroutineScope)
     }
 
     private val folder get() = File(context.cacheDir, "update")
+    private val apk get() = File(folder, "update.apk")
 
     fun canInstall(): Boolean = context.packageManager.canRequestPackageInstalls()
 
@@ -119,7 +122,7 @@ class Installer(private val context: Context, private val scope: CoroutineScope)
             deleteRecursively()
             mkdirs()
         }
-        val file = File(dir, "update.apk")
+        val file = File(dir, apk.name)
         val request = Request.Builder().url(url).header("User-Agent", "FA-Mobile-updater").build()
         client.newCall(request).execute().use { response ->
             if (!response.isSuccessful) throw IOException("HTTP ${response.code}")
@@ -180,14 +183,39 @@ class Installer(private val context: Context, private val scope: CoroutineScope)
         }
     }
 
+    /** The checked download is still there, for [openInSystemInstaller]. */
+    fun hasDownload(): Boolean = apk.isFile && job?.isActive != true
+
+    /**
+     * Hands the download to Android's own installer, as if the APK had been opened from the files app:
+     * the way round when Android (or Play Protect) stops the app's own install.
+     */
+    fun openInSystemInstaller(from: Context): Boolean {
+        if (!hasDownload()) return false
+        val uri = FileProvider.getUriForFile(context, context.packageName + ".updates", apk)
+        val view = Intent(Intent.ACTION_VIEW)
+            .setDataAndType(uri, "application/vnd.android.package-archive")
+            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        return try {
+            from.startActivity(view)
+            true
+        } catch (e: ActivityNotFoundException) {
+            false
+        }
+    }
+
     internal fun onResult(status: Int, message: String?, confirm: Intent?) {
+        // Android's own words and number, so a report says what went wrong.
+        val detail = listOfNotNull(message?.trim()?.ifEmpty { null }, "status $status").joinToString(", ")
         _state.value = when (status) {
             PackageInstaller.STATUS_PENDING_USER_ACTION ->
-                confirm?.let { InstallState.Confirm(it) } ?: InstallState.Failed(message ?: "status $status")
-            PackageInstaller.STATUS_SUCCESS, PackageInstaller.STATUS_FAILURE_ABORTED -> InstallState.Idle
+                confirm?.let { InstallState.Confirm(it) } ?: InstallState.Failed(detail)
+            PackageInstaller.STATUS_SUCCESS -> InstallState.Idle
+            // Also what comes back when Play Protect or the phone's own guard stops it, not only on "Cancel".
+            PackageInstaller.STATUS_FAILURE_ABORTED -> InstallState.Failed(context.getString(R.string.update_aborted, detail))
             PackageInstaller.STATUS_FAILURE_CONFLICT, PackageInstaller.STATUS_FAILURE_INCOMPATIBLE ->
-                InstallState.Failed(context.getString(R.string.update_conflict))
-            else -> InstallState.Failed(message ?: "status $status")
+                InstallState.Failed(context.getString(R.string.update_conflict) + " ($detail)")
+            else -> InstallState.Failed(detail)
         }
     }
 }

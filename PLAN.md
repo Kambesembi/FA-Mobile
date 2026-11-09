@@ -262,6 +262,10 @@ with a higher versionCode, and goes to Android's `PackageInstaller` (`REQUEST_IN
 first time Android asks to allow installs from the app; each install shows Android's own confirmation
 (from Android 12 later ones may skip it, `setRequireUserAction(NOT_REQUIRED)`). Android refuses an APK
 signed with another key. "Later" doesn't ask about that version again until the app starts anew.
+When the install fails or comes back "aborted" (also what Play Protect's scan or a phone's own guard
+causes, not only "Cancel") the dialog shows Android's message and status number, and offers "Open in
+Android's installer": the download goes by FileProvider (`<applicationId>.updates`, cache/update/ only)
+to ACTION_VIEW, the same as opening the APK from the files app.
 
 ## Notes from Iteration 7
 

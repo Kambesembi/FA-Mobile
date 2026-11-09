@@ -47,10 +47,13 @@
     <string name="update_downloading">Neue Version wird geladen…</string>
     <string name="update_installing">Wird installiert… Bestätige auf Androids Bildschirm, falls gefragt.</string>
     <string name="update_permission">Android braucht erst dein OK, damit FA Mobile seine Updates installieren darf. Schalte auf dem nächsten Bildschirm „Dieser Quelle vertrauen“ ein und komm dann zurück.</string>
-    <string name="update_install_failed">Aktualisieren ging nicht (%1$s).</string>
+    <string name="update_install_failed">Aktualisieren ging nicht: %1$s</string>
     <string name="update_no_apk">die Version hat keine APK</string>
     <string name="update_bad_file">der Download ist kein neueres FA Mobile</string>
     <string name="update_conflict">Android installiert sie nicht über diese Kopie, die anders signiert ist</string>
+    <string name="update_aborted">Android hat die Installation abgebrochen. Vielleicht hat Play Protect oder der Schutz des Handys sie blockiert. Android meldet: %1$s</string>
+    <string name="update_system">Mit Androids Installer öffnen</string>
+    <string name="update_system_hint">Der Download ist fertig. Androids eigener Installer kann ihn trotzdem installieren, genau wie beim Öffnen der APK aus deinen Dateien.</string>
     <string name="update_notify_title">FA Mobile %1$s ist verfügbar</string>
     <string name="update_notify_text">Tippen, um die App zu aktualisieren.</string>
     <string name="channel_updates">App-Updates</string>
