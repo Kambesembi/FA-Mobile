@@ -98,10 +98,13 @@ fun UpdatePrompt(updates: Updates, installer: Installer) {
                         LinearProgressIndicator(Modifier.fillMaxWidth())
                     }
                     InstallState.NeedsPermission -> Text(stringResource(R.string.update_permission))
-                    is InstallState.Failed -> Text(
-                        stringResource(R.string.update_install_failed, s.message),
-                        color = MaterialTheme.colorScheme.error,
-                    )
+                    is InstallState.Failed -> {
+                        Text(stringResource(R.string.update_install_failed, s.message), color = MaterialTheme.colorScheme.error)
+                        if (installer.hasDownload()) {
+                            Spacer(Modifier.height(8.dp))
+                            Text(stringResource(R.string.update_system_hint), style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
                 }
             }
         },
@@ -122,6 +125,9 @@ fun UpdatePrompt(updates: Updates, installer: Installer) {
                     Text(stringResource(R.string.update_release_page))
                 }
                 is InstallState.Downloading -> TextButton(onClick = { installer.cancel() }) { Text(stringResource(R.string.update_cancel)) }
+                is InstallState.Failed -> if (installer.hasDownload()) {
+                    TextButton(onClick = { installer.openInSystemInstaller(context) }) { Text(stringResource(R.string.update_system)) }
+                }
                 else -> Unit
             }
             if (!busy) TextButton(onClick = later) { Text(stringResource(R.string.update_later)) }

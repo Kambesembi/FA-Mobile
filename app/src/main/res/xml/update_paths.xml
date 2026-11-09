@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Only the downloaded update, handed to Android's installer when the app's own install fails. -->
+<paths>
+    <cache-path name="update" path="update/" />
+</paths>

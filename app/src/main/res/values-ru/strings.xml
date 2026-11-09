@@ -47,10 +47,13 @@
     <string name="update_downloading">Скачивается новая версия…</string>
     <string name="update_installing">Установка… Подтвердите на экране Android, если он спросит.</string>
     <string name="update_permission">Сначала Android должен разрешить FA Mobile устанавливать свои обновления. Включите «Разрешить установку из этого источника» на следующем экране и вернитесь сюда.</string>
-    <string name="update_install_failed">Не удалось обновить (%1$s).</string>
+    <string name="update_install_failed">Не удалось обновить: %1$s</string>
     <string name="update_no_apk">в выпуске нет APK</string>
     <string name="update_bad_file">загруженный файл — не более новая FA Mobile</string>
     <string name="update_conflict">Android не установит её поверх этой копии, у которой другая подпись</string>
+    <string name="update_aborted">Android прервал установку. Возможно, её заблокировал Play Защита или защита телефона. Android сообщает: %1$s</string>
+    <string name="update_system">Открыть в установщике Android</string>
+    <string name="update_system_hint">Файл уже скачан. Собственный установщик Android всё равно может его установить, как при открытии APK из файлов.</string>
     <string name="update_notify_title">Доступна FA Mobile %1$s</string>
     <string name="update_notify_text">Нажмите, чтобы обновить приложение.</string>
     <string name="channel_updates">Обновления приложения</string>
