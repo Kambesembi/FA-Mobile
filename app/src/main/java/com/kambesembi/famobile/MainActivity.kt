@@ -94,6 +94,9 @@ class MainActivity : ComponentActivity() {
         /** A screen to open, from an upload notification. */
         const val EXTRA_OPEN = "open"
         const val OPEN_UPLOADS = "uploads"
+
+        /** From the update notification: ask to update now. */
+        const val OPEN_UPDATE = "update"
     }
 
     /**
@@ -102,6 +105,7 @@ class MainActivity : ComponentActivity() {
      */
     private fun handleOpen(intent: Intent) {
         if (intent.getStringExtra(EXTRA_OPEN) == OPEN_UPLOADS) container.requestScreen("uploads")
+        if (intent.getStringExtra(EXTRA_OPEN) == OPEN_UPDATE) container.scope.launch { container.updates.checkAndOffer(force = true) }
         val uris = when (intent.action) {
             Intent.ACTION_SEND -> listOfNotNull(intent.streamExtra())
             Intent.ACTION_SEND_MULTIPLE -> intent.streamExtras()

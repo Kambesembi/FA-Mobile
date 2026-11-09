@@ -122,6 +122,8 @@ class UploadParserTest {
                 FilterOption("1000001", "Warmups", "Sketches"),
                 FilterOption("1000002", "Studies", "Sketches"),
                 FilterOption("1000003", "Night Shift", "Comics"),
+                // Ungrouped, though it comes after the last group.
+                FilterOption("1000004", "Misc", null),
             ),
             folders,
         )

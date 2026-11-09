@@ -73,6 +73,7 @@ import com.kambesembi.famobile.ui.components.LocalQuickActions
 import com.kambesembi.famobile.ui.components.OutsideLinkDialog
 import com.kambesembi.famobile.ui.components.PullSurprise
 import com.kambesembi.famobile.ui.components.QuickActions
+import com.kambesembi.famobile.ui.components.UpdatePrompt
 import com.kambesembi.famobile.ui.explore.ExploreTab
 import com.kambesembi.famobile.ui.fasettings.FaSettingsPicker
 import com.kambesembi.famobile.ui.fasettings.FaSettingsView
@@ -135,6 +136,7 @@ fun AppRoot(container: AppContainer, start: StartOptions) {
         challengeUrl?.let { url ->
             ChallengeScreen(url, container.userAgent, onResult = container.challenge::resolve)
         }
+        if (!container.isDemo) UpdatePrompt(container.updates, container.installer)
     }
 }
 

@@ -252,9 +252,16 @@ FA's own upload is three pages of forms. The app makes it one screen, and nothin
 
 Twice a day (WorkManager, and once at app start) the app asks GitHub's API for the latest release of
 `Kambesembi/FA-Mobile` and compares its tag with its own version. A newer one gets one notification
-(tap: download the APK); Settings → App updates shows the state, a "Look now" button and an off switch.
+(tap: opens the app); Settings → App updates shows the state, a "Look now" button and an off switch.
 Nothing but that one GET is sent. While the repository is private GitHub answers 404, shown as "not
 public yet".
+
+With the app open (at start, from the notification or the settings button) a dialog asks "Update to
+x?". On yes the release's APK downloads to the cache with its progress, is checked to be this package
+with a higher versionCode, and goes to Android's `PackageInstaller` (`REQUEST_INSTALL_PACKAGES`). The
+first time Android asks to allow installs from the app; each install shows Android's own confirmation
+(from Android 12 later ones may skip it, `setRequireUserAction(NOT_REQUIRED)`). Android refuses an APK
+signed with another key. "Later" doesn't ask about that version again until the app starts anew.
 
 ## Notes from Iteration 7
 

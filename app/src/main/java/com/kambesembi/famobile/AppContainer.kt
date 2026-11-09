@@ -25,6 +25,7 @@ import com.kambesembi.famobile.data.net.LiveSource
 import com.kambesembi.famobile.data.net.PageSource
 import com.kambesembi.famobile.data.notify.CheckWorker
 import com.kambesembi.famobile.data.notify.Notifier
+import com.kambesembi.famobile.data.update.Installer
 import com.kambesembi.famobile.data.update.Updates
 import com.kambesembi.famobile.data.upload.UploadNotifier
 import com.kambesembi.famobile.ui.util.DemoImageInterceptor
@@ -56,6 +57,7 @@ class AppContainer(private val app: Application) {
 
     val settings = AppSettings(app)
     val updates = Updates(app, settings)
+    val installer = Installer(app, scope)
 
     val userAgent: String by lazy { FaUserAgent.build(app) }
 
@@ -150,7 +152,13 @@ class AppContainer(private val app: Application) {
         UploadNotifier.createChannels(app)
         Updates.createChannel(app)
         uploads.resume()
-        scope.launch { updates.schedule(settings.updateChecks.first()) }
+        installer.cleanUp()
+        scope.launch {
+            val checks = settings.updateChecks.first()
+            updates.schedule(checks)
+            // Opening the app asks about a new version, if there is one.
+            if (checks) updates.checkAndOffer()
+        }
         scope.launch { settings.sfw.collect { fa.setSfw(it) } }
         scope.launch { CheckWorker.schedule(app, settings.checkInterval.first(), replace = false) }
         scope.launch {
