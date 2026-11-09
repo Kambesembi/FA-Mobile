@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -42,6 +43,7 @@ import com.kambesembi.famobile.data.model.NoteFolder
 import com.kambesembi.famobile.data.model.NoteSummary
 import com.kambesembi.famobile.ui.components.Avatar
 import com.kambesembi.famobile.ui.components.Bubble
+import com.kambesembi.famobile.ui.components.FurryLoader
 import com.kambesembi.famobile.ui.components.readableSide
 
 /** The notes list: folder chips on top, newest first, more while scrolling. */
@@ -90,9 +92,8 @@ fun NotesScreen(
                     Button(onClick = onRetry) { Text(stringResource(R.string.retry)) }
                 }
             }
-            !state.loaded -> item(key = "loading") {
-                Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
-            }
+            // The same loader as the other tabs, below the folders.
+            !state.loaded -> item(key = "loading") { Box(Modifier.fillMaxWidth().height(520.dp)) { FurryLoader() } }
             state.notes.isEmpty() -> item(key = "empty") {
                 Bubble(Modifier.fillMaxWidth()) {
                     Text(stringResource(R.string.notes_empty_folder), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
