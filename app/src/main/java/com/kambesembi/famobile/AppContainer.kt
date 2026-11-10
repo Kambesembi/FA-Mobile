@@ -81,7 +81,7 @@ class AppContainer(private val app: Application) {
 
     val submissions: SubmissionRepository by lazy { SubmissionRepository(fa) }
     val faSettings: FaSettingsRepository by lazy { FaSettingsRepository(fa) }
-    val comics: ComicRepository by lazy { ComicRepository(fa, submissions) }
+    val comics: ComicRepository by lazy { ComicRepository(fa, submissions, scope) }
 
     val activity: ActivityRepository by lazy { ActivityRepository(fa) }
 

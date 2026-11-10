@@ -92,10 +92,14 @@ class ExploreRepository(private val fa: FaClient) {
             try {
                 val next = current.page + 1
                 val page = load(_state.value, next)
-                if (ticket != generation) return
+                if (ticket != generation) {
+                    // The query changed meanwhile: its own refresh shows the results, this page is dropped.
+                    _state.update { it.copy(loadingMore = false) }
+                    return
+                }
                 _state.update { apply(it, page, next, reset = false) }
             } catch (e: IOException) {
-                if (ticket == generation) _state.update { it.copy(loadingMore = false, error = e.message ?: "Network error") }
+                _state.update { if (ticket == generation) it.copy(loadingMore = false, error = e.message ?: "Network error") else it.copy(loadingMore = false) }
             }
         }
     }

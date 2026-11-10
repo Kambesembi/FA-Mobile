@@ -20,11 +20,21 @@ e-mail addresses or real form keys; the three string files have the same entries
 cleartext traffic is off by default; the update is safe against a swapped APK because Android
 checks the signature.
 
+## Status (2026-11-10, after the first round of fixes)
+
+Fixed, each marked **Fixed** below: bugs 1, 2, 3 and 5, and from the smaller ones the `screen`
+extra, the stale note key, Explore's "loading more", the doubled submission request and the
+background check's cancellation. Everything else is open and waits for a decision or a check on a
+phone.
+
 ## Bugs
 
 Ordered by how much they hurt.
 
 ### 1. An upload cut off by Android stays "Sending" for good
+
+**Fixed:** a cancelled send puts the job back (`Sending` to `Queued`, `Finishing` to `Failed` with the
+"interrupted" text), and the worker does the same for anything left over when it starts.
 
 `data/UploadRepository.kt:352-427`, `data/upload/UploadWorker.kt`
 
@@ -42,6 +52,9 @@ the worker apply `recover()` to stale jobs when it starts.
 
 ### 2. A comic stops loading when the screen is left or the phone is turned
 
+**Fixed:** the walk runs in the app's scope, one job per comic; Back from the reader ends it
+(`close()`), opening a page's submission or turning the phone doesn't. Tested in `LoadingTest`.
+
 `ui/viewer/ComicScreen.kt:84`, `data/ComicRepository.kt:42`
 
 The page-by-page walk runs inside the screen's `LaunchedEffect`, so it is cancelled when the reader
@@ -55,6 +68,9 @@ Sure by reading. Fix: run the walk in the app scope and keep one `Job` per comic
 cancellation.
 
 ### 3. "Remove location" fails open
+
+**Fixed (the first paragraph):** when the tags can't be removed, or are still there afterwards, the
+picture is re-encoded, which drops all of its metadata. The two smaller holes below are open.
 
 `data/upload/UploadFiles.kt:157-165`
 
@@ -83,6 +99,9 @@ but it is a risk judged from the numbers, not a crash I saw. Fix: decode to abou
 pixels at most, recycle before scaling, catch `OutOfMemoryError` and fail the job with a message.
 
 ### 5. Comic detection misreads many ordinary titles and links
+
+**Fixed:** keywords and link words must be whole words, and a link text over 30 characters is not a
+series link. A short one like "my first commission" still counts. Tested in `ComicParserTest`.
 
 `data/parse/ComicParser.kt:19-22` and `47-54`
 
@@ -123,23 +142,23 @@ intent has `FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY`.
 
 ### 8. Smaller ones
 
-- **Any app can crash the start.** `MainActivity.kt:68` reads the `screen` extra in release builds
+- **Any app can crash the start.** *(Fixed: the extra is read in debug builds only.)* `MainActivity.kt:68` reads the `screen` extra in release builds
   too (the comment says it is for CI). `AppRoot.kt:162` navigates to anything starting with `user/`
   or `journal/`; `user/a/b` matches no route and `navigate` throws. Gate the extra behind
   `BuildConfig.DEBUG` like `view` and `demo`.
 - **The Cloudflare check loads the address that failed** (`data/FaClient.kt:61`). For FA's action
   links (`/fav/<id>/?key=…`, `/watch/…`) the WebView performs the action and OkHttp then repeats it.
   Harmless for fav and watch today, but a neutral FA page would be the safer thing to show.
-- **A stale note key is kept after a failed send** (`data/NotesRepository.kt:133`). If FA rejects
+- **A stale note key is kept after a failed send** *(fixed)* (`data/NotesRepository.kt:133`). If FA rejects
   the cached `key`, every further try fails until the notes list is loaded again. Drop the key when
   a send isn't confirmed.
-- **Explore can get stuck on "loading more"** (`data/ExploreRepository.kt:95`). A `loadMore` whose
+- **Explore can get stuck on "loading more"** *(fixed)* (`data/ExploreRepository.kt:95`). A `loadMore` whose
   answer is dropped because the query changed leaves `loadingMore = true`; if the refresh that
   follows fails, further pages don't load until a refresh succeeds.
-- **Two requests for one page.** The viewer loads the next submission ahead
+- **Two requests for one page.** *(Fixed: one request per submission at a time.)* The viewer loads the next submission ahead
   (`ui/viewer/ViewerScreen.kt:154`) and the page itself loads it again if the swipe comes first;
   `SubmissionRepository.load` has no "already on its way" check.
-- **The background check swallows cancellation** (`data/notify/CheckWorker.kt:33`, `runCatching`
+- **The background check swallows cancellation** *(fixed; the new client per run is unchanged)* (`data/notify/CheckWorker.kt:33`, `runCatching`
   around a suspending call) and builds a new `OkHttpClient` on every run.
 
 ## Decisions worth a second look

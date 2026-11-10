@@ -25,6 +25,7 @@ import com.kambesembi.famobile.data.upload.UploadWorker
 import java.io.File
 import java.io.IOException
 import java.util.UUID
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -94,15 +95,20 @@ class UploadRepository(
     private fun read(): String? = runCatching { stateFile.takeIf { it.exists() }?.readText() }.getOrNull()
 
     /** After the app was killed mid-upload: start the send again, but never guess whether FA saved it. */
-    private fun recover(store: UploadStore): UploadStore = store.copy(
-        jobs = store.jobs.map { job ->
-            when (job.status) {
-                UploadStatus.Sending -> job.copy(status = UploadStatus.Queued, progress = 0f)
-                UploadStatus.Finishing -> job.copy(status = UploadStatus.Failed, message = app.getString(R.string.upload_interrupted))
-                else -> job
-            }
-        },
-    )
+    private fun recover(store: UploadStore): UploadStore = store.copy(jobs = store.jobs.map(::interrupted))
+
+    /** A job whose send was cut off: the file goes again; with the details already on their way, FA may have it. */
+    private fun interrupted(job: UploadJob): UploadJob = when (job.status) {
+        UploadStatus.Sending -> job.copy(status = UploadStatus.Queued, progress = 0f)
+        UploadStatus.Finishing -> job.copy(status = UploadStatus.Failed, message = app.getString(R.string.upload_interrupted))
+        else -> job
+    }
+
+    /**
+     * Called by the background work before it sends anything: only it sends, so whatever still says
+     * "sending" was cut off (Android stopped the work when the connection went) and never said so.
+     */
+    fun recoverInterrupted() = update(change = ::recover)
 
     private fun update(persist: Boolean = true, change: (UploadStore) -> UploadStore) {
         val next = _store.updateAndGet(change)
@@ -408,6 +414,10 @@ class UploadRepository(
                 ?: throw UploadRefused(UploadParser.problem(result.document) ?: app.getString(R.string.upload_not_confirmed))
             done(id, submission, onProgress)
         } catch (e: FloodWait) {
+            throw e
+        } catch (e: CancellationException) {
+            // Android stopped the work (the connection went, or its time was up): the next run takes it up.
+            setJob(id, change = ::interrupted)
             throw e
         } catch (e: ChallengeRequired) {
             fail(id, app.getString(R.string.upload_needs_check), needsCheck = true)

@@ -64,6 +64,29 @@ class ComicParserTest {
     }
 
     @Test
+    fun aWordEndingLikePageOrPartKeepsItsEnd() {
+        assertEquals(NumberedTitle("Sketch", 24), ComicParser.numberedTitle("Sketch 24"))
+        assertEquals(NumberedTitle("Piano", 2), ComicParser.numberedTitle("Piano 2"))
+        assertEquals(NumberedTitle("Counterpart", 3), ComicParser.numberedTitle("Counterpart 3"))
+        assertEquals(NumberedTitle("Casino", 7), ComicParser.numberedTitle("Casino 7"))
+        assertEquals(NumberedTitle("Night Shift", 3), ComicParser.numberedTitle("Night Shift ch3"))
+        assertEquals(NumberedTitle("Night Shift", 3), ComicParser.numberedTitle("Night Shift, No. 3"))
+    }
+
+    @Test
+    fun wordsThatOnlyHoldALabelAreNotSeriesLinks() {
+        val html = """
+            <a href="/view/1/">the background</a> <a href="/view/2/">feedback welcome</a>
+            <a href="/view/3/">blast from the past</a> <a href="/view/4/">annext</a>
+            <a href="/view/5/">This is the first picture I ever drew of the two of them</a>
+        """
+        assertTrue(ComicParser.links(html).isEmpty)
+        val links = ComicParser.links("""<a href="/view/6/">Back</a> <a href="/view/7/">Previous page</a> <a href="/view/8/">Next page</a>""")
+        assertEquals(6L, links.prev)
+        assertEquals(8L, links.next)
+    }
+
+    @Test
     fun seriesFromThePageAlone() {
         assertTrue(ComicParser.isSeries("Night Shift 3", ""))
         assertTrue(ComicParser.isSeries("A title", """<a href="/view/2/">Next »</a>"""))

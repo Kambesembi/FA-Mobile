@@ -99,7 +99,8 @@ object UploadFiles {
                 return@withContext ReadyFile(file, upload.name, "image/gif")
             }
             if (accepted && file.length() <= maxBytes) {
-                if (stripLocation && (ext == "jpg" || ext == "jpeg" || ext == "png")) removeLocation(file)
+                // Couldn't be taken out: write the picture anew, which leaves all of the photo's data behind.
+                if (stripLocation && !removeLocation(file)) return@withContext reencode(context, file, upload.name, maxBytes)
                 return@withContext ReadyFile(file, upload.name, if (ext == "png") "image/png" else "image/jpeg")
             }
             reencode(context, file, upload.name, maxBytes)
@@ -153,16 +154,20 @@ object UploadFiles {
         }
     }.getOrDefault(0)
 
-    /** Takes the GPS tags out of the app's own copy; the rest of the photo's data stays. */
-    private fun removeLocation(file: File) {
-        runCatching {
-            val exif = ExifInterface(file.path)
-            val present = GPS_TAGS.filter { exif.getAttribute(it) != null }
-            if (present.isEmpty()) return
-            present.forEach { exif.setAttribute(it, null) }
-            exif.saveAttributes()
+    /**
+     * Takes the GPS tags out of the app's own copy; the rest of the photo's data stays. False when
+     * the file's data couldn't be read or the tags are still there afterwards.
+     */
+    private fun removeLocation(file: File): Boolean = runCatching {
+        fun present() = ExifInterface(file.path).let { exif -> GPS_TAGS.filter { exif.getAttribute(it) != null } }
+        val tags = present()
+        if (tags.isEmpty()) return@runCatching true
+        ExifInterface(file.path).apply {
+            tags.forEach { setAttribute(it, null) }
+            saveAttributes()
         }
-    }
+        present().isEmpty()
+    }.getOrDefault(false)
 
     /**
      * After the upload: only a small picture stays in [dir] for the uploads list, the files go.
