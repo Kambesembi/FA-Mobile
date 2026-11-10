@@ -53,6 +53,7 @@ class UploadWorker(context: Context, params: WorkerParameters) : CoroutineWorker
         val container = (applicationContext as FaApp).container
         val uploads = container.uploads
         val source = container.uploadSource()
+        uploads.recoverInterrupted()
         show(null)
         try {
             while (true) {

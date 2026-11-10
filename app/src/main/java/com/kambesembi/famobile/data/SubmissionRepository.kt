@@ -11,6 +11,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /** Submission pages, kept in memory while swiping back and forth so each loads once. */
 class SubmissionRepository(private val fa: FaClient) {
@@ -21,6 +23,9 @@ class SubmissionRepository(private val fa: FaClient) {
     val loaded: StateFlow<Map<Long, SubmissionResult>> = _loaded.asStateFlow()
 
     private val order = ArrayDeque<Long>()
+
+    /** Pages on their way, by id. */
+    private val loading = HashMap<Long, Mutex>()
 
     private val _favorited = MutableStateFlow<Set<Long>>(emptySet())
 
@@ -40,9 +45,16 @@ class SubmissionRepository(private val fa: FaClient) {
     /** Loads a submission unless it is already here. Throws IOException on network trouble. */
     suspend fun load(id: Long, force: Boolean = false): SubmissionResult {
         if (!force) _loaded.value[id]?.let { return it }
-        val result = fa.read("/view/$id/") { SubmissionParser.parse(it, id) }
-        store(id, result)
-        return result
+        // The viewer loads the next page ahead; a swipe that gets there first waits for that answer.
+        val lock = synchronized(loading) { loading.getOrPut(id) { Mutex() } }
+        try {
+            return lock.withLock {
+                if (!force) _loaded.value[id]?.let { return@withLock it }
+                fa.read("/view/$id/") { SubmissionParser.parse(it, id) }.also { store(id, it) }
+            }
+        } finally {
+            synchronized(loading) { if (!lock.isLocked) loading.remove(id) }
+        }
     }
 
     /** Favs or unfavs; FA answers with the submission page, so the new state comes from FA itself. */

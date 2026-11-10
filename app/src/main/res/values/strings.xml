@@ -477,6 +477,7 @@
     <string name="upload_wrong_type">FA doesn’t take “%1$s” for this kind of submission.</string>
     <string name="upload_unreadable">“%1$s” couldn’t be read as a picture.</string>
     <string name="upload_logged_out">You’re logged out. Log in again, then tap Try again.</string>
+    <string name="upload_other_account">This upload was queued as %1$s. Log in as %1$s to send it.</string>
     <string name="upload_no_form">FA’s upload page couldn’t be read. Try it on the website.</string>
     <string name="upload_kind_unavailable">FA doesn’t take this kind of submission right now.</string>
     <string name="upload_not_accepted">FA didn’t take the file.</string>

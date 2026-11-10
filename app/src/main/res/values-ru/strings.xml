@@ -502,6 +502,7 @@
     <string name="upload_wrong_type">FA не принимает «%1$s» для такого вида работ.</string>
     <string name="upload_unreadable">«%1$s» не удалось прочитать как картинку.</string>
     <string name="upload_logged_out">Вы вышли из аккаунта. Войдите снова, затем нажмите «Повторить».</string>
+    <string name="upload_other_account">Эта загрузка поставлена в очередь от имени %1$s. Войдите как %1$s, чтобы отправить её.</string>
     <string name="upload_no_form">Не удалось прочитать страницу загрузки FA. Попробуйте на сайте.</string>
     <string name="upload_kind_unavailable">FA сейчас не принимает такой вид работ.</string>
     <string name="upload_not_accepted">FA не принял файл.</string>

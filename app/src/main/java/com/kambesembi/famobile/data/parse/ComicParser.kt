@@ -17,7 +17,7 @@ object ComicParser {
 
     private val viewId = Regex("""/(?:view|full)/(\d+)""")
     private val numbered = Regex(
-        """^(.*?)[\s\-–—:|,.(\[]*(?:page|pg|part|pt|chapter|ch|episode|ep|no)?\.?\s*#?\s*(\d{1,4})(?:\s*(?:/|of)\s*\d{1,4})?[\s)\]]*$""",
+        """^(.*?)[\s\-–—:|,.(\[]*(?:\b(?:page|pg|part|pt|chapter|ch|episode|ep|no))?\.?\s*#?\s*(\d{1,4})(?:\s*(?:/|of)\s*\d{1,4})?[\s)\]]*$""",
         RegexOption.IGNORE_CASE,
     )
     private val trailing = Regex("""[\s\-–—:|,.(\[#]+$""")
@@ -44,12 +44,19 @@ object ComicParser {
 
     private enum class Kind { First, Last, Prev, Next }
 
+    // Whole words: "back", not "background"; and a label, not a sentence that happens to hold one.
+    private val firstWord = Regex("""\bfirst\b""")
+    private val lastWord = Regex("""\b(?:last|latest|newest)\b""")
+    private val prevWord = Regex("""\b(?:prev|previous|back)\b|<<|«|‹|←|^<$""")
+    private val nextWord = Regex("""\bnext\b|>>|»|›|→|^>$""")
+    private const val MAX_LABEL = 30
+
     private fun kind(text: String): Kind? = when {
-        text.isEmpty() -> null
-        "first" in text -> Kind.First
-        Regex("last|latest|newest").containsMatchIn(text) -> Kind.Last
-        Regex("""prev|back|<<|«|‹|←|^<$""").containsMatchIn(text) -> Kind.Prev
-        Regex("""next|>>|»|›|→|^>$""").containsMatchIn(text) -> Kind.Next
+        text.isEmpty() || text.length > MAX_LABEL -> null
+        firstWord.containsMatchIn(text) -> Kind.First
+        lastWord.containsMatchIn(text) -> Kind.Last
+        prevWord.containsMatchIn(text) -> Kind.Prev
+        nextWord.containsMatchIn(text) -> Kind.Next
         else -> null
     }
 

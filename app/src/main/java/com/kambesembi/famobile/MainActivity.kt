@@ -65,7 +65,8 @@ class MainActivity : ComponentActivity() {
         }
         val start = StartOptions(
             tab = intent.getIntExtra(EXTRA_TAB, 0),
-            screen = intent.getStringExtra("screen"),
+            // Debug only (CI screenshots): another app must not steer the release app's start.
+            screen = if (BuildConfig.DEBUG) intent.getStringExtra("screen") else null,
         )
         if (savedInstanceState == null) {
             handleLink(intent)

@@ -99,14 +99,22 @@ object UploadFiles {
                 return@withContext ReadyFile(file, upload.name, "image/gif")
             }
             if (accepted && file.length() <= maxBytes) {
-                if (stripLocation && (ext == "jpg" || ext == "jpeg" || ext == "png")) removeLocation(file)
+                // Couldn't be taken out: write the picture anew, which leaves all of the photo's data behind.
+                if (stripLocation && !removeLocation(file)) return@withContext reencode(context, file, upload.name, maxBytes)
                 return@withContext ReadyFile(file, upload.name, if (ext == "png") "image/png" else "image/jpeg")
             }
             reencode(context, file, upload.name, maxBytes)
         }
 
     /** Decodes the picture (turned upright) and writes it as JPEG, or PNG when it has transparency, small enough. */
-    private fun reencode(context: Context, file: File, name: String, maxBytes: Long): ReadyFile {
+    private fun reencode(context: Context, file: File, name: String, maxBytes: Long): ReadyFile = try {
+        reencodeUnguarded(context, file, name, maxBytes)
+    } catch (e: OutOfMemoryError) {
+        // The upload fails with a reason; the app (and the rest of the queue) carries on.
+        throw UploadProblem(context.getString(R.string.upload_too_big, name, maxBytes / (1024 * 1024)))
+    }
+
+    private fun reencodeUnguarded(context: Context, file: File, name: String, maxBytes: Long): ReadyFile {
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         BitmapFactory.decodeFile(file.path, bounds)
         if (bounds.outWidth <= 0) throw UploadProblem(context.getString(R.string.upload_unreadable, name))
@@ -153,16 +161,20 @@ object UploadFiles {
         }
     }.getOrDefault(0)
 
-    /** Takes the GPS tags out of the app's own copy; the rest of the photo's data stays. */
-    private fun removeLocation(file: File) {
-        runCatching {
-            val exif = ExifInterface(file.path)
-            val present = GPS_TAGS.filter { exif.getAttribute(it) != null }
-            if (present.isEmpty()) return
-            present.forEach { exif.setAttribute(it, null) }
-            exif.saveAttributes()
+    /**
+     * Takes the GPS tags out of the app's own copy; the rest of the photo's data stays. False when
+     * the file's data couldn't be read or the tags are still there afterwards.
+     */
+    private fun removeLocation(file: File): Boolean = runCatching {
+        fun present() = ExifInterface(file.path).let { exif -> GPS_TAGS.filter { exif.getAttribute(it) != null } }
+        val tags = present()
+        if (tags.isEmpty()) return@runCatching true
+        ExifInterface(file.path).apply {
+            tags.forEach { setAttribute(it, null) }
+            saveAttributes()
         }
-    }
+        present().isEmpty()
+    }.getOrDefault(false)
 
     /**
      * After the upload: only a small picture stays in [dir] for the uploads list, the files go.
@@ -239,7 +251,7 @@ object UploadFiles {
         return file
     }
 
-    private const val MAX_DECODE_PIXELS = 40_000_000L
+    private const val MAX_DECODE_PIXELS = 16_000_000L
 
     private val GPS_TAGS = listOf(
         ExifInterface.TAG_GPS_LATITUDE, ExifInterface.TAG_GPS_LATITUDE_REF,

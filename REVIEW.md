@@ -20,11 +20,22 @@ e-mail addresses or real form keys; the three string files have the same entries
 cleartext traffic is off by default; the update is safe against a swapped APK because Android
 checks the signature.
 
+## Status (2026-11-10, after two rounds of fixes)
+
+Fixed, each marked below: bugs 1 to 6 (of 3 and 6, the main part), and from the smaller ones the
+`screen` extra, the Cloudflare check's address, the stale note key, Explore's "loading more", the
+doubled submission request and the background check's cancellation. Bug 7 was tried on a phone and
+does not happen. In CI, the write permission and the release notes are done. Everything else is
+open.
+
 ## Bugs
 
 Ordered by how much they hurt.
 
 ### 1. An upload cut off by Android stays "Sending" for good
+
+**Fixed:** a cancelled send puts the job back (`Sending` to `Queued`, `Finishing` to `Failed` with the
+"interrupted" text), and the worker does the same for anything left over when it starts.
 
 `data/UploadRepository.kt:352-427`, `data/upload/UploadWorker.kt`
 
@@ -42,6 +53,9 @@ the worker apply `recover()` to stale jobs when it starts.
 
 ### 2. A comic stops loading when the screen is left or the phone is turned
 
+**Fixed:** the walk runs in the app's scope, one job per comic; Back from the reader ends it
+(`close()`), opening a page's submission or turning the phone doesn't. Tested in `LoadingTest`.
+
 `ui/viewer/ComicScreen.kt:84`, `data/ComicRepository.kt:42`
 
 The page-by-page walk runs inside the screen's `LaunchedEffect`, so it is cancelled when the reader
@@ -55,6 +69,9 @@ Sure by reading. Fix: run the walk in the app scope and keep one `Job` per comic
 cancellation.
 
 ### 3. "Remove location" fails open
+
+**Fixed (the first paragraph):** when the tags can't be removed, or are still there afterwards, the
+picture is re-encoded, which drops all of its metadata. The two smaller holes below are open.
 
 `data/upload/UploadFiles.kt:157-165`
 
@@ -70,6 +87,9 @@ file's real type.
 
 ### 4. Large artwork can run the app out of memory, then again at every start
 
+**Fixed:** pictures that have to be re-encoded are decoded to 16 million pixels at most, and running
+out of memory fails that one upload with a message. Not tried with a real file.
+
 `data/upload/UploadFiles.kt:109-138`, limit at line 242
 
 A picture over FA's 10 MB is decoded whole up to 40 million pixels: 160 MB as a bitmap. Rotating it
@@ -84,6 +104,9 @@ pixels at most, recycle before scaling, catch `OutOfMemoryError` and fail the jo
 
 ### 5. Comic detection misreads many ordinary titles and links
 
+**Fixed:** keywords and link words must be whole words, and a link text over 30 characters is not a
+series link. A short one like "my first commission" still counts. Tested in `ComicParserTest`.
+
 `data/parse/ComicParser.kt:19-22` and `47-54`
 
 - The page-number pattern allows the words `page|pg|part|pt|chapter|ch|episode|ep|no` right before
@@ -97,6 +120,10 @@ pixels at most, recycle before scaling, catch `OutOfMemoryError` and fail the jo
   as a comic and walks to unrelated submissions. Fix: match whole words, and only short link texts.
 
 ### 6. Uploads and drafts carry over to the next account
+
+**Fixed (the first paragraph):** every upload keeps the account it was queued under. Another account
+sees and sends only its own; the first one's form is put aside and its queue goes on when it logs
+in again. FA's own logout and cancelling requests under way are still open.
 
 `AppContainer.kt:177-187`, `data/UploadRepository.kt:455`
 
@@ -113,6 +140,8 @@ fill a repository again.
 
 ### 7. Reopening the app from "recents" repeats the share or the link
 
+**Not a bug:** tried on a phone, the upload form does not come back. Nothing changed.
+
 `MainActivity.kt:70-73`
 
 `handleLink` and `handleOpen` run whenever `savedInstanceState` is null. After the activity was
@@ -123,23 +152,23 @@ intent has `FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY`.
 
 ### 8. Smaller ones
 
-- **Any app can crash the start.** `MainActivity.kt:68` reads the `screen` extra in release builds
+- **Any app can crash the start.** *(Fixed: the extra is read in debug builds only.)* `MainActivity.kt:68` reads the `screen` extra in release builds
   too (the comment says it is for CI). `AppRoot.kt:162` navigates to anything starting with `user/`
   or `journal/`; `user/a/b` matches no route and `navigate` throws. Gate the extra behind
   `BuildConfig.DEBUG` like `view` and `demo`.
-- **The Cloudflare check loads the address that failed** (`data/FaClient.kt:61`). For FA's action
+- **The Cloudflare check loads the address that failed** *(fixed: it shows FA's front page)* (`data/FaClient.kt:61`). For FA's action
   links (`/fav/<id>/?key=…`, `/watch/…`) the WebView performs the action and OkHttp then repeats it.
   Harmless for fav and watch today, but a neutral FA page would be the safer thing to show.
-- **A stale note key is kept after a failed send** (`data/NotesRepository.kt:133`). If FA rejects
+- **A stale note key is kept after a failed send** *(fixed)* (`data/NotesRepository.kt:133`). If FA rejects
   the cached `key`, every further try fails until the notes list is loaded again. Drop the key when
   a send isn't confirmed.
-- **Explore can get stuck on "loading more"** (`data/ExploreRepository.kt:95`). A `loadMore` whose
+- **Explore can get stuck on "loading more"** *(fixed)* (`data/ExploreRepository.kt:95`). A `loadMore` whose
   answer is dropped because the query changed leaves `loadingMore = true`; if the refresh that
   follows fails, further pages don't load until a refresh succeeds.
-- **Two requests for one page.** The viewer loads the next submission ahead
+- **Two requests for one page.** *(Fixed: one request per submission at a time.)* The viewer loads the next submission ahead
   (`ui/viewer/ViewerScreen.kt:154`) and the page itself loads it again if the swipe comes first;
   `SubmissionRepository.load` has no "already on its way" check.
-- **The background check swallows cancellation** (`data/notify/CheckWorker.kt:33`, `runCatching`
+- **The background check swallows cancellation** *(fixed; the new client per run is unchanged)* (`data/notify/CheckWorker.kt:33`, `runCatching`
   around a suspending call) and builds a new `OkHttpClient` on every run.
 
 ## Decisions worth a second look
@@ -196,10 +225,10 @@ intent has `FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY`.
 
 - **No Gradle wrapper.** CI installs Gradle 8.9 by version and the README asks the same of a local
   build. A committed wrapper pins the version and its checksum for everyone.
-- **Write access for the whole workflow** (`.github/workflows/build.yml:15`). Only the release step
+- **Write access for the whole workflow** *(fixed: only the build job has it; pinning is open)* (`.github/workflows/build.yml:15`). Only the release step
   needs `contents: write`; the screenshots job runs a third-party emulator action with it too. Set
   it on the build job only. The third-party actions are pinned by tag (`@v2`, `@v4`), not by commit.
-- **Every push to `main` is a public release**, with no notes. Users are asked to update for each
+- **Every push to `main` is a public release**, with no notes *(notes are now generated; the rest is open)*. Users are asked to update for each
   push, and the dialog can't say what changed. `generate_release_notes: true` is one line; a manual
   release step (or a tag) would make releases a decision.
 - **Re-running a workflow run** reuses its run number, so it replaces the APK of an existing release
