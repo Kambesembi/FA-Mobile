@@ -16,7 +16,14 @@ data class UploadStore(
     val folders: List<FilterOption> = emptyList(),
     /** When FA last took an upload (ms since 1970): FA turns away the next one for a while. */
     val lastUploadAt: Long = 0,
-)
+    /** The FA account (URL name, lower case) the form and the choices belong to; null until one was seen. */
+    val account: String? = null,
+    /** The half-filled forms of other accounts on this phone, kept for when they log in again. */
+    val parked: Map<String, UploadDraft> = emptyMap(),
+) {
+    /** What [account] gets to see: its own uploads, not another account's. */
+    val shown: UploadStore get() = copy(jobs = jobs.filter { it.account == null || it.account == account })
+}
 
 /** [UploadStore] as JSON, for a file in the app's storage. Unknown or broken parts fall back to defaults. */
 object UploadCodec {
@@ -29,6 +36,8 @@ object UploadCodec {
         put("lists", lists(store.lists))
         put("folders", options(store.folders))
         put("lastUpload", store.lastUploadAt)
+        store.account?.let { put("account", it) }
+        if (store.parked.isNotEmpty()) put("parked", JSONObject().apply { store.parked.forEach { (name, d) -> put(name, draft(d)) } })
     }.toString()
 
     fun decode(text: String?): UploadStore {
@@ -41,6 +50,10 @@ object UploadCodec {
             lists = json.optJSONObject("lists")?.let(::lists) ?: UploadLists(),
             folders = options(json.optJSONArray("folders")),
             lastUploadAt = json.optLong("lastUpload"),
+            account = json.optStringOrNull("account"),
+            parked = json.optJSONObject("parked")?.let { o ->
+                o.keys().asSequence().mapNotNull { name -> o.optJSONObject(name)?.let { name to draft(it) } }.toMap()
+            }.orEmpty(),
         )
     }
 
@@ -64,6 +77,7 @@ object UploadCodec {
         put("needsCheck", j.needsCheck)
         put("attempts", j.attempts)
         put("created", j.created)
+        j.account?.let { put("account", it) }
     }
 
     private fun job(o: JSONObject) = UploadJob(
@@ -76,6 +90,7 @@ object UploadCodec {
         needsCheck = o.optBoolean("needsCheck"),
         attempts = o.optInt("attempts"),
         created = o.optLong("created"),
+        account = o.optStringOrNull("account"),
     )
 
     private fun item(i: UploadItem) = JSONObject().apply {

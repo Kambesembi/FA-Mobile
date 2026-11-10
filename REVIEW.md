@@ -20,12 +20,13 @@ e-mail addresses or real form keys; the three string files have the same entries
 cleartext traffic is off by default; the update is safe against a swapped APK because Android
 checks the signature.
 
-## Status (2026-11-10, after the first round of fixes)
+## Status (2026-11-10, after two rounds of fixes)
 
-Fixed, each marked **Fixed** below: bugs 1, 2, 3 and 5, and from the smaller ones the `screen`
-extra, the stale note key, Explore's "loading more", the doubled submission request and the
-background check's cancellation. Everything else is open and waits for a decision or a check on a
-phone.
+Fixed, each marked below: bugs 1 to 6 (of 3 and 6, the main part), and from the smaller ones the
+`screen` extra, the Cloudflare check's address, the stale note key, Explore's "loading more", the
+doubled submission request and the background check's cancellation. Bug 7 was tried on a phone and
+does not happen. In CI, the write permission and the release notes are done. Everything else is
+open.
 
 ## Bugs
 
@@ -86,6 +87,9 @@ file's real type.
 
 ### 4. Large artwork can run the app out of memory, then again at every start
 
+**Fixed:** pictures that have to be re-encoded are decoded to 16 million pixels at most, and running
+out of memory fails that one upload with a message. Not tried with a real file.
+
 `data/upload/UploadFiles.kt:109-138`, limit at line 242
 
 A picture over FA's 10 MB is decoded whole up to 40 million pixels: 160 MB as a bitmap. Rotating it
@@ -117,6 +121,10 @@ series link. A short one like "my first commission" still counts. Tested in `Com
 
 ### 6. Uploads and drafts carry over to the next account
 
+**Fixed (the first paragraph):** every upload keeps the account it was queued under. Another account
+sees and sends only its own; the first one's form is put aside and its queue goes on when it logs
+in again. FA's own logout and cancelling requests under way are still open.
+
 `AppContainer.kt:177-187`, `data/UploadRepository.kt:455`
 
 `logout()` clears every repository, but `uploads.clear()` only resets the upload page's info. The
@@ -132,6 +140,8 @@ fill a repository again.
 
 ### 7. Reopening the app from "recents" repeats the share or the link
 
+**Not a bug:** tried on a phone, the upload form does not come back. Nothing changed.
+
 `MainActivity.kt:70-73`
 
 `handleLink` and `handleOpen` run whenever `savedInstanceState` is null. After the activity was
@@ -146,7 +156,7 @@ intent has `FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY`.
   too (the comment says it is for CI). `AppRoot.kt:162` navigates to anything starting with `user/`
   or `journal/`; `user/a/b` matches no route and `navigate` throws. Gate the extra behind
   `BuildConfig.DEBUG` like `view` and `demo`.
-- **The Cloudflare check loads the address that failed** (`data/FaClient.kt:61`). For FA's action
+- **The Cloudflare check loads the address that failed** *(fixed: it shows FA's front page)* (`data/FaClient.kt:61`). For FA's action
   links (`/fav/<id>/?key=…`, `/watch/…`) the WebView performs the action and OkHttp then repeats it.
   Harmless for fav and watch today, but a neutral FA page would be the safer thing to show.
 - **A stale note key is kept after a failed send** *(fixed)* (`data/NotesRepository.kt:133`). If FA rejects
@@ -215,10 +225,10 @@ intent has `FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY`.
 
 - **No Gradle wrapper.** CI installs Gradle 8.9 by version and the README asks the same of a local
   build. A committed wrapper pins the version and its checksum for everyone.
-- **Write access for the whole workflow** (`.github/workflows/build.yml:15`). Only the release step
+- **Write access for the whole workflow** *(fixed: only the build job has it; pinning is open)* (`.github/workflows/build.yml:15`). Only the release step
   needs `contents: write`; the screenshots job runs a third-party emulator action with it too. Set
   it on the build job only. The third-party actions are pinned by tag (`@v2`, `@v4`), not by commit.
-- **Every push to `main` is a public release**, with no notes. Users are asked to update for each
+- **Every push to `main` is a public release**, with no notes *(notes are now generated; the rest is open)*. Users are asked to update for each
   push, and the dialog can't say what changed. `generate_release_notes: true` is one line; a manual
   release step (or a tag) would make releases a decision.
 - **Re-running a workflow run** reuses its run number, so it replaces the APK of an existing release

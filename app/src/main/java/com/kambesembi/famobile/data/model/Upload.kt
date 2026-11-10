@@ -136,6 +136,8 @@ data class UploadJob(
     /** Network failures so far; after a few the upload gives up until retried. */
     val attempts: Int = 0,
     val created: Long = 0,
+    /** The FA account (URL name, lower case) it was queued under; null for uploads from before accounts were kept. */
+    val account: String? = null,
 ) {
     val active: Boolean get() = status == UploadStatus.Queued || status == UploadStatus.Sending || status == UploadStatus.Finishing
 }

@@ -164,6 +164,7 @@ class AppContainer(private val app: Application) {
         scope.launch {
             fa.header.filterNotNull().collect { header ->
                 if (header.user != null) {
+                    uploads.setAccount(header.user.username)
                     settings.setSeenCounts(header.counts)
                     Notifier.clear(app)
                     // The app's SFW choice wins: after a new login FA's cookie is gone, so set it again.

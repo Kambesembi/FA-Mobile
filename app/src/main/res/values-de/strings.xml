@@ -466,6 +466,7 @@
     <string name="upload_wrong_type">FA nimmt „%1$s“ für diese Art von Einreichung nicht an.</string>
     <string name="upload_unreadable">„%1$s“ konnte nicht als Bild gelesen werden.</string>
     <string name="upload_logged_out">Du bist abgemeldet. Melde dich wieder an und tippe dann auf „Erneut versuchen“.</string>
+    <string name="upload_other_account">Dieser Upload wurde als %1$s eingereiht. Melde dich als %1$s an, um ihn zu senden.</string>
     <string name="upload_no_form">FAs Upload-Seite konnte nicht gelesen werden. Versuch es auf der Website.</string>
     <string name="upload_kind_unavailable">FA nimmt diese Art von Einreichung gerade nicht an.</string>
     <string name="upload_not_accepted">FA hat die Datei nicht angenommen.</string>

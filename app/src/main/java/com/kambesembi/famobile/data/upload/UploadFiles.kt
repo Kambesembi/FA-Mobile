@@ -107,7 +107,14 @@ object UploadFiles {
         }
 
     /** Decodes the picture (turned upright) and writes it as JPEG, or PNG when it has transparency, small enough. */
-    private fun reencode(context: Context, file: File, name: String, maxBytes: Long): ReadyFile {
+    private fun reencode(context: Context, file: File, name: String, maxBytes: Long): ReadyFile = try {
+        reencodeUnguarded(context, file, name, maxBytes)
+    } catch (e: OutOfMemoryError) {
+        // The upload fails with a reason; the app (and the rest of the queue) carries on.
+        throw UploadProblem(context.getString(R.string.upload_too_big, name, maxBytes / (1024 * 1024)))
+    }
+
+    private fun reencodeUnguarded(context: Context, file: File, name: String, maxBytes: Long): ReadyFile {
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         BitmapFactory.decodeFile(file.path, bounds)
         if (bounds.outWidth <= 0) throw UploadProblem(context.getString(R.string.upload_unreadable, name))
@@ -244,7 +251,7 @@ object UploadFiles {
         return file
     }
 
-    private const val MAX_DECODE_PIXELS = 40_000_000L
+    private const val MAX_DECODE_PIXELS = 16_000_000L
 
     private val GPS_TAGS = listOf(
         ExifInterface.TAG_GPS_LATITUDE, ExifInterface.TAG_GPS_LATITUDE_REF,

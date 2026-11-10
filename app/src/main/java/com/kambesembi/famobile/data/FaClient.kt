@@ -58,7 +58,9 @@ class FaClient(
         val page = try {
             request()
         } catch (e: ChallengeRequired) {
-            if (!challenge.await(e.url)) throw ChallengeCancelled()
+            // FA's front page: the clearance counts for the whole site, and loading the address that failed
+            // would carry out a fav or watch link a second time.
+            if (!challenge.await(FaUrls.BASE + "/")) throw ChallengeCancelled()
             source.onChallengeResolved()
             request()
         }
