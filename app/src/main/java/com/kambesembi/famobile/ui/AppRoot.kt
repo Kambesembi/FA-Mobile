@@ -472,7 +472,10 @@ private fun LoggedIn(container: AppContainer, state: SessionState.LoggedIn, star
                         repo = container.comics,
                         settings = container.settings,
                         onOpen = { page -> nav.navigate("viewer/$page/$page") },
-                        onBack = { nav.popBackStack() },
+                        onBack = {
+                            container.comics.close()
+                            nav.popBackStack()
+                        },
                     )
                 }
                 composable("note/{id}", arguments = listOf(navArgument("id") { type = NavType.LongType })) { entry ->

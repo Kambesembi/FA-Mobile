@@ -7,13 +7,15 @@ import com.kambesembi.famobile.data.model.SubmissionResult
 import com.kambesembi.famobile.data.parse.ComicParser
 import com.kambesembi.famobile.data.parse.ExploreParser
 import java.io.IOException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
 
 /** A comic being put together: the pages so far, in order, and whether more are coming. */
 data class ComicState(
@@ -30,40 +32,62 @@ data class ComicState(
  * Loads a whole series, page by page: by the artist's First/Prev/Next links, or, without those, by
  * FA's search for the same title with other page numbers. Pages show up as they load.
  */
-class ComicRepository(private val fa: FaClient, private val submissions: SubmissionRepository) {
+class ComicRepository(
+    private val fa: FaClient,
+    private val submissions: SubmissionRepository,
+    private val scope: CoroutineScope,
+) {
 
     private val _state = MutableStateFlow<ComicState?>(null)
     val state: StateFlow<ComicState?> = _state.asStateFlow()
 
-    suspend fun open(startId: Long) = withContext(Dispatchers.Default) { load(startId) }
+    /** The walk through the pages. It belongs to the app, not the screen, so turning the phone doesn't end it. */
+    private var job: Job? = null
+
+    /**
+     * Starts loading the comic of [startId], unless it is loading already or is all there. Call from
+     * the main thread.
+     */
+    fun open(startId: Long) {
+        val current = _state.value
+        val same = current != null && current.startId == startId
+        if (same && (job?.isActive == true || (current?.loading == false && current.error == null))) return
+        job?.cancel()
+        _state.value = ComicState(startId)
+        job = scope.launch(Dispatchers.Default) { load(startId) }
+    }
+
+    /** Only the comic [startId] is changed: a walk that was replaced leaves the new one alone. */
+    private inline fun change(startId: Long, crossinline to: (ComicState) -> ComicState) =
+        _state.update { s -> if (s != null && s.startId == startId) to(s) else s }
 
     private suspend fun load(startId: Long) {
-        val current = _state.value
-        if (current != null && current.startId == startId && (current.loading || current.error == null)) return
-        _state.value = ComicState(startId)
         try {
             val first = submissions.load(startId)
             val start = (first as? SubmissionResult.Loaded)?.submission ?: run {
-                _state.update { it?.copy(loading = false, error = (first as? SubmissionResult.Unavailable)?.message.orEmpty()) }
+                change(startId) { it.copy(loading = false, error = (first as? SubmissionResult.Unavailable)?.message.orEmpty()) }
                 return
             }
-            _state.update { it?.copy(pages = listOf(start)) }
+            change(startId) { it.copy(pages = listOf(start)) }
             if (!ComicParser.links(start.descriptionHtml).isEmpty) byLinks(start) else byTitle(start)
-            _state.update { it?.copy(loading = false) }
+            change(startId) { it.copy(loading = false) }
         } catch (e: IOException) {
-            _state.update { it?.copy(loading = false, error = e.message ?: e.javaClass.simpleName) }
+            change(startId) { it.copy(loading = false, error = e.message ?: e.javaClass.simpleName) }
         }
     }
 
+    /** The reader was left: stop loading and forget the pages. */
     fun close() {
+        job?.cancel()
+        job = null
         _state.value = null
     }
 
     private suspend fun page(id: Long): Submission? =
         (submissions.load(id) as? SubmissionResult.Loaded)?.submission
 
-    private fun add(page: Submission, before: Boolean) = _state.update { s ->
-        s?.copy(pages = if (before) listOf(page) + s.pages else s.pages + page)
+    private fun add(comic: Long, page: Submission, before: Boolean) = change(comic) { s ->
+        s.copy(pages = if (before) listOf(page) + s.pages else s.pages + page)
     }
 
     private fun full() = (_state.value?.pages?.size ?: 0) >= MAX_PAGES
@@ -77,7 +101,7 @@ class ComicRepository(private val fa: FaClient, private val submissions: Submiss
             if (!seen.add(next)) break
             pause()
             n = page(next) ?: break
-            add(n, before = false)
+            add(start.id, n, before = false)
         }
         val startLinks = ComicParser.links(start.descriptionHtml)
         if (startLinks.prev != null) {
@@ -88,7 +112,7 @@ class ComicRepository(private val fa: FaClient, private val submissions: Submiss
                 if (!seen.add(prev)) break
                 pause()
                 p = page(prev) ?: break
-                add(p, before = true)
+                add(start.id, p, before = true)
             }
         } else if (startLinks.first != null && startLinks.first !in seen) {
             // Only "First": from there forward until this page.
@@ -99,7 +123,7 @@ class ComicRepository(private val fa: FaClient, private val submissions: Submiss
                 pause()
                 val p = page(id) ?: break
                 gap += p
-                _state.update { s -> s?.copy(pages = gap + s.pages.filter { it.id !in gap.map(Submission::id) }) }
+                change(start.id) { s -> s.copy(pages = gap + s.pages.filter { it.id !in gap.map(Submission::id) }) }
                 id = ComicParser.links(p.descriptionHtml).next
             }
         }
@@ -123,7 +147,7 @@ class ComicRepository(private val fa: FaClient, private val submissions: Submiss
             if (!results.hasNext || results.items.isEmpty()) break
         }
         if (byNumber.size < 2) {
-            _state.update { it?.copy(alone = true) }
+            change(start.id) { it.copy(alone = true) }
             return
         }
         val order = byNumber.values.toList().take(MAX_PAGES)
@@ -133,7 +157,7 @@ class ComicRepository(private val fa: FaClient, private val submissions: Submiss
                 pause()
                 loaded[id] = page(id) ?: continue
             }
-            _state.update { s -> s?.copy(pages = order.mapNotNull { loaded[it] }) }
+            change(start.id) { s -> s.copy(pages = order.mapNotNull { loaded[it] }) }
         }
     }
 

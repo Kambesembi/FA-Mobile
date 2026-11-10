@@ -25,6 +25,7 @@ import com.kambesembi.famobile.data.upload.UploadWorker
 import java.io.File
 import java.io.IOException
 import java.util.UUID
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -69,7 +70,10 @@ class UploadRepository(
     private val draftDir = File(root, "draft")
 
     private val _store = MutableStateFlow(recover(UploadCodec.decode(read())))
-    val store: StateFlow<UploadStore> = _store.asStateFlow()
+    private val _shown = MutableStateFlow(_store.value.shown)
+
+    /** The form, the queue and the choices of the account that is logged in; other accounts' uploads wait unseen. */
+    val store: StateFlow<UploadStore> = _shown.asStateFlow()
 
     private val _prep = MutableStateFlow(UploadPrep())
     val prep: StateFlow<UploadPrep> = _prep.asStateFlow()
@@ -94,24 +98,56 @@ class UploadRepository(
     private fun read(): String? = runCatching { stateFile.takeIf { it.exists() }?.readText() }.getOrNull()
 
     /** After the app was killed mid-upload: start the send again, but never guess whether FA saved it. */
-    private fun recover(store: UploadStore): UploadStore = store.copy(
-        jobs = store.jobs.map { job ->
-            when (job.status) {
-                UploadStatus.Sending -> job.copy(status = UploadStatus.Queued, progress = 0f)
-                UploadStatus.Finishing -> job.copy(status = UploadStatus.Failed, message = app.getString(R.string.upload_interrupted))
-                else -> job
-            }
-        },
-    )
+    private fun recover(store: UploadStore): UploadStore = store.copy(jobs = store.jobs.map(::interrupted))
+
+    /** A job whose send was cut off: the file goes again; with the details already on their way, FA may have it. */
+    private fun interrupted(job: UploadJob): UploadJob = when (job.status) {
+        UploadStatus.Sending -> job.copy(status = UploadStatus.Queued, progress = 0f)
+        UploadStatus.Finishing -> job.copy(status = UploadStatus.Failed, message = app.getString(R.string.upload_interrupted))
+        else -> job
+    }
+
+    /**
+     * Called by the background work before it sends anything: only it sends, so whatever still says
+     * "sending" was cut off (Android stopped the work when the connection went) and never said so.
+     */
+    fun recoverInterrupted() = update(change = ::recover)
 
     private fun update(persist: Boolean = true, change: (UploadStore) -> UploadStore) {
         val next = _store.updateAndGet(change)
+        _shown.value = _store.value.shown
         if (persist) saves.trySend(next)
+    }
+
+    /**
+     * The account now logged in. Another one than before gets its own form (the other's is put aside
+     * with its files) and only its own uploads; what it queued earlier goes on.
+     */
+    fun setAccount(username: String) {
+        val name = username.lowercase()
+        if (_store.value.account == name) return
+        update { s ->
+            val before = s.account
+            when (before) {
+                name -> s
+                // The first account seen: what is there from before is its own.
+                null -> s.copy(account = name, jobs = s.jobs.map { if (it.account == null) it.copy(account = name) else it })
+                else -> s.copy(
+                    account = name,
+                    draft = s.parked[name] ?: UploadDraft(),
+                    parked = (s.parked - name).let { if (s.draft.isEmpty) it else it + (before to s.draft) },
+                    // Gallery folders are the other account's.
+                    folders = emptyList(),
+                    preset = s.preset.copy(folders = emptyList()),
+                )
+            }
+        }
+        resume()
     }
 
     /** Called when the app starts: anything left in the queue goes on. */
     fun resume() {
-        if (_store.value.jobs.any { it.status == UploadStatus.Queued }) UploadWorker.enqueue(app)
+        if (nextQueued() != null) UploadWorker.enqueue(app)
     }
 
     // ---- The form
@@ -228,9 +264,9 @@ class UploadRepository(
         // Files set apart stay behind for forms of their own.
         val jobs = draft.sending.mapIndexed { i, item ->
             val id = UUID.randomUUID().toString()
-            UploadJob(id, moveTo(File(root, id), item), draft.details.forItem(item), created = now + i)
+            UploadJob(id, moveTo(File(root, id), item), draft.details.forItem(item), created = now + i, account = _store.value.account)
         }
-        val done = _store.value.jobs.filter { it.status == UploadStatus.Done }.sortedBy { it.created }
+        val done = store.value.jobs.filter { it.status == UploadStatus.Done }.sortedBy { it.created }
         val dropped = done.dropLast(MAX_DONE).map { it.id }.toSet()
         scope.launch(Dispatchers.IO) { dropped.forEach { File(root, it).deleteRecursively() } }
         update { s ->
@@ -294,7 +330,7 @@ class UploadRepository(
     }
 
     fun clearFinished() {
-        val done = _store.value.jobs.filter { it.status == UploadStatus.Done }.map { it.id }.toSet()
+        val done = store.value.jobs.filter { it.status == UploadStatus.Done }.map { it.id }.toSet()
         update { s -> s.copy(jobs = s.jobs.filter { it.id !in done }) }
         scope.launch(Dispatchers.IO) { done.forEach { File(root, it).deleteRecursively() } }
     }
@@ -304,7 +340,8 @@ class UploadRepository(
 
     // ---- The queue (the background work calls these)
 
-    fun nextQueued(): UploadJob? = _store.value.jobs.firstOrNull { it.status == UploadStatus.Queued }
+    /** The next upload of the account that is logged in. */
+    fun nextQueued(): UploadJob? = _store.value.shown.jobs.firstOrNull { it.status == UploadStatus.Queued }
 
     enum class Outcome { Done, Failed, Offline }
 
@@ -361,6 +398,11 @@ class UploadRepository(
                 if (submitPage.header.present && submitPage.header.user == null) throw UploadRefused(app.getString(R.string.upload_logged_out))
                 throw refused(submitPage.document, R.string.upload_no_form)
             }
+            // Never into another account's gallery (the login changed while this one waited).
+            val user = submitPage.header.user?.username?.lowercase()
+            if (job.account != null && user != null && user != job.account) {
+                throw UploadRefused(app.getString(R.string.upload_other_account, job.account))
+            }
             val kind = job.item.kind
             if (kind !in submit.kinds) throw UploadRefused(app.getString(R.string.upload_kind_unavailable))
             val max = submit.maxFileSize ?: UploadFiles.DEFAULT_MAX_BYTES
@@ -408,6 +450,10 @@ class UploadRepository(
                 ?: throw UploadRefused(UploadParser.problem(result.document) ?: app.getString(R.string.upload_not_confirmed))
             done(id, submission, onProgress)
         } catch (e: FloodWait) {
+            throw e
+        } catch (e: CancellationException) {
+            // Android stopped the work (the connection went, or its time was up): the next run takes it up.
+            setJob(id, change = ::interrupted)
             throw e
         } catch (e: ChallengeRequired) {
             fail(id, app.getString(R.string.upload_needs_check), needsCheck = true)

@@ -120,8 +120,10 @@ class UploadModelTest {
                     attempts = 2,
                     created = 99,
                 ),
-                UploadJob("id-2", UploadItem(file, "Done", UploadKind.Artwork), details, status = UploadStatus.Done, submissionId = 10001100, created = 100),
+                UploadJob("id-2", UploadItem(file, "Done", UploadKind.Artwork), details, status = UploadStatus.Done, submissionId = 10001100, created = 100, account = "artist1"),
             ),
+            account = "artist1",
+            parked = mapOf("artist2" to UploadDraft(listOf(UploadItem(file, "Theirs", UploadKind.Artwork)), details)),
             preset = details.preset(),
             recentKeywords = listOf("fox", "sunset"),
             lists = UploadLists(categories = listOf(FilterOption("2", "Artwork (Digital)", "Visual Art")), exact = true),
@@ -129,6 +131,21 @@ class UploadModelTest {
             lastUploadAt = 1_762_300_000_000,
         )
         assertEquals(store, UploadCodec.decode(UploadCodec.encode(store)))
+    }
+
+    @Test
+    fun anAccountSeesItsOwnUploadsOnly() {
+        val item = UploadItem(UploadFile("/data/a.png", "a.png", "image/png", 1, null, null), "A", UploadKind.Artwork)
+        val store = UploadStore(
+            jobs = listOf(
+                UploadJob("mine", item, UploadDetails(), account = "artist1"),
+                UploadJob("theirs", item, UploadDetails(), account = "artist2"),
+                UploadJob("old", item, UploadDetails()),
+            ),
+            account = "artist1",
+        )
+        assertEquals(listOf("mine", "old"), store.shown.jobs.map { it.id })
+        assertEquals(listOf("theirs", "old"), store.copy(account = "artist2").shown.jobs.map { it.id })
     }
 
     @Test
