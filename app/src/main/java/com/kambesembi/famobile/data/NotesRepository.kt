@@ -139,6 +139,8 @@ class NotesRepository(private val fa: FaClient) {
                 if (_state.value.folder == NoteFolder.Sent) refresh()
                 null
             } else {
+                // The key may be what FA didn't like (they go stale): the next try gets a fresh one.
+                sendKey = null
                 SystemMessageParser.message(doc) ?: doc.selectFirst(".notice-message, .error, .redirect-message")?.text()?.trim()
                     ?.ifEmpty { null } ?: "Fur Affinity didn't confirm the note was sent."
             }

@@ -1,5 +1,6 @@
 package com.kambesembi.famobile.ui.viewer
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -82,6 +83,8 @@ fun ComicScreen(
     val scope = rememberCoroutineScope()
     var zoom by rememberSaveable { mutableStateOf<Long?>(null) }
     LaunchedEffect(startId) { repo.open(startId) }
+    // Leaving the reader (the arrow or the back gesture) ends the loading; a zoomed page closes first.
+    BackHandler(enabled = zoom == null, onBack = onBack)
 
     val comic = state?.takeIf { it.startId == startId }
     val pages = comic?.pages.orEmpty()
@@ -125,10 +128,10 @@ fun ComicScreen(
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
             when {
-                pages.isEmpty() && comic?.error != null -> Message(stringResource(R.string.comic_failed, comic.error), onRetry = { scope.launch { repo.open(startId) } })
+                pages.isEmpty() && comic?.error != null -> Message(stringResource(R.string.comic_failed, comic.error), onRetry = { repo.open(startId) })
                 pages.isEmpty() -> FurryLoader()
                 horizontal -> Pages(pages, startId, onZoom = { zoom = it }, onOpen = onOpen)
-                else -> Strip(pages, startId, comic, onZoom = { zoom = it }, onOpen = onOpen, onRetry = { scope.launch { repo.open(startId) } })
+                else -> Strip(pages, startId, comic, onZoom = { zoom = it }, onOpen = onOpen, onRetry = { repo.open(startId) })
             }
         }
     }

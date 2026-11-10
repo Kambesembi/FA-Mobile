@@ -16,6 +16,7 @@ import com.kambesembi.famobile.data.parse.ActivityParser
 import com.kambesembi.famobile.data.parse.InboxParser
 import com.kambesembi.famobile.data.parse.NotesParser
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.CancellationException
 import org.jsoup.nodes.Document
 
 /**
@@ -30,8 +31,7 @@ class CheckWorker(context: Context, params: WorkerParameters) : CoroutineWorker(
         if (container.isDemo) return Result.success()
         // Its own connection, so a check never waits behind (or changes) what the app is loading.
         val source = LiveSource(container.userAgent)
-        val page = runCatching { source.fetch(FaUrls.COUNTS_PAGE) }.getOrNull()
-            ?: return Result.success()
+        val page = quietly { source.fetch(FaUrls.COUNTS_PAGE) } ?: return Result.success()
         if (page.header.user == null) return Result.success() // logged out (or a page without the header)
         val settings = container.settings
         val now = page.header.counts
@@ -50,7 +50,7 @@ class CheckWorker(context: Context, params: WorkerParameters) : CoroutineWorker(
     private suspend fun withDetails(source: LiveSource, news: List<News>): List<News> {
         val needed = news.mapNotNull { NewsDetails.source(it.category) }.toSet()
         suspend fun <T> load(kind: NewsDetails.Source, path: String, parse: (Document) -> T): T? =
-            if (kind in needed) runCatching { parse(source.fetch(path).document) }.getOrNull() else null
+            if (kind in needed) quietly { parse(source.fetch(path).document) } else null
         val activity = load(NewsDetails.Source.Activity, "/msg/others/", ActivityParser::parse)
         // The notes list shows FA's current folder; unread notes only count when it is the inbox.
         val notes = load(NewsDetails.Source.Notes, "/msg/pms/") { NotesParser.list(it).notes }
@@ -65,6 +65,15 @@ class CheckWorker(context: Context, params: WorkerParameters) : CoroutineWorker(
             }
             n.copy(lines = lines.orEmpty())
         }
+    }
+
+    /** Null when it didn't work out; Android stopping the check is passed on, not swallowed. */
+    private suspend fun <T> quietly(block: suspend () -> T): T? = try {
+        block()
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        null
     }
 
     companion object {
