@@ -56,8 +56,6 @@ a release.
 account belong in the git-ignored `local/` folder and must never be committed; `tools/scrub_fixture.py`
 turns one into a safe test page.
 
-See [PLAN.md](PLAN.md) for how the app was planned and built.
-
 ## License
 
 None: the code is public to read, but all rights are reserved.
