@@ -1,5 +1,6 @@
 package com.kambesembi.famobile.ui.inbox
 
+import com.kambesembi.famobile.ui.components.ScrollTopOnReload
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -90,6 +91,7 @@ private fun Grid(
     val gridState = rememberLazyStaggeredGridState()
     val loadMore by rememberUpdatedState(onLoadMore)
     val total = state.items.size
+    ScrollTopOnReload(state.refreshing) { gridState.scrollToItem(0) }
 
     // Infinite scroll: ask for the next page while a dozen thumbnails are still ahead.
     LaunchedEffect(gridState, total) {

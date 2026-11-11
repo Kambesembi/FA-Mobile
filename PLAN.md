@@ -360,3 +360,19 @@ PayPal address are not offered.
   `fixtures/`, and only those are committed. The parser unit tests run on those in CI.
 - A **demo mode** that loads those saved pages, so CI can take screenshots on the emulator without logging in.
 - Real-account testing happens on your phone with each APK.
+
+## v0.5.0
+
+- The fixes from the code review (see REVIEW.md, which marks each entry): uploads that stayed
+  "Sending", comics that stopped loading, uploads kept per account, FA's own logout, a notification
+  when the background check can't look any more, waiting on FA's "busy" answers, and more.
+- Coming back from a submission or a note no longer loads the tab again: what a tab last showed
+  (FA's count, and when) is kept while another screen covers the tabs.
+- Back in the app after more than 3 minutes: the tab on screen loads again and goes to the top,
+  once when the reload starts and once when the new entries are in.
+- In a note, the sender's and the recipient's row (picture and name) opens their profile.
+- After an update Android closes the app to install it. The new version is told when it is in
+  (`MY_PACKAGE_REPLACED`): up to Android 9 it opens itself again; from Android 10 an app may not
+  open itself from the background, so a notification says "updated" and opens it on a tap. The
+  install dialog says so beforehand.
+- The version is 0.5.<run - 8>: run 8 of the build is the first of this iteration.

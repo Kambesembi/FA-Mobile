@@ -1,5 +1,6 @@
 package com.kambesembi.famobile.ui.explore
 
+import com.kambesembi.famobile.ui.components.ScrollTopOnReload
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -90,6 +91,7 @@ fun ExploreScreen(tab: ExploreTab, demo: Boolean) {
     val focus = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
     val gridState = rememberLazyStaggeredGridState()
+    ScrollTopOnReload(state.refreshing) { gridState.scrollToItem(0) }
     val loadMore by rememberUpdatedState(tab.loadMore)
     val total = state.items.size
 
