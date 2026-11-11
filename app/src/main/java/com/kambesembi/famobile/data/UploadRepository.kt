@@ -228,7 +228,7 @@ class UploadRepository(
         _prep.update { it.copy(loading = true, error = null) }
         try {
             val page = fa.page(SUBMIT_PATH)
-            val submit = UploadParser.submitPage(page.document)
+            val submit = fa.parsed(page) { UploadParser.submitPage(it) }
             _prep.update {
                 it.copy(
                     maxBytes = submit?.maxFileSize ?: UploadFiles.DEFAULT_MAX_BYTES,
@@ -237,7 +237,7 @@ class UploadRepository(
                 )
             }
             if (_store.value.lists.isEmpty) {
-                val options = ExploreParser.browse(fa.page("/browse/").document).options
+                val options = fa.read("/browse/") { ExploreParser.browse(it) }.options
                 val lists = UploadLists(
                     categories = options.categories.filterNot(UploadParser::isNoChoice),
                     themes = options.types.filterNot(UploadParser::isNoChoice),
@@ -246,7 +246,7 @@ class UploadRepository(
                 if (!lists.isEmpty) update { s -> if (s.lists.exact) s else s.copy(lists = lists) }
             }
             if (username != null) {
-                val folders = UploadParser.galleryFolders(fa.page("/gallery/$username/").document)
+                val folders = fa.read("/gallery/$username/") { UploadParser.galleryFolders(it) }
                 update { it.copy(folders = folders) }
             }
         } catch (e: IOException) {

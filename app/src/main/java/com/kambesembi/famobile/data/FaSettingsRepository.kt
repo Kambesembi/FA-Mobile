@@ -35,7 +35,7 @@ class FaSettingsRepository(private val fa: FaClient) {
         if (edit is FaSettingEditor.Tags) return saveTags(setting, edit.tags)
         val path = setting.page.path
         val form = fa.read(path) { FaSettingsForm.fill(it, setting, edit, path) }
-            ?: throw IOException("This setting can't be changed from the app; use \"Change on FA\".")
+            ?: throw IOException(Words.get(Words.Text.SettingOnFa))
         val answer = if (form.multipart) {
             fa.postMultipart(form.action, form.fields, form.fileFields.map { FormFile(it, null) })
         } else {
@@ -43,7 +43,7 @@ class FaSettingsRepository(private val fa: FaClient) {
         }
         val after = fa.read(path) { entry(it, setting) }
         if (!sameState(after.editor, edit)) {
-            throw IOException(SystemMessageParser.message(answer.document) ?: "Fur Affinity didn't take the change.")
+            throw IOException(SystemMessageParser.message(answer.document) ?: Words.get(Words.Text.SettingRefused))
         }
         return after
     }
@@ -52,7 +52,7 @@ class FaSettingsRepository(private val fa: FaClient) {
     private suspend fun saveTags(setting: FaSetting, tags: List<String>): FaSettingEntry {
         val path = setting.page.path
         val (key, now) = fa.read(path) { FaSettingsParser.tagKey(it) to FaSettingsParser.blockedTags(it) }
-        if (key.isEmpty()) throw IOException("This setting can't be changed from the app; use \"Change on FA\".")
+        if (key.isEmpty()) throw IOException(Words.get(Words.Text.SettingOnFa))
         val wanted = tags.map { it.trim().lowercase() }.filter { it.isNotEmpty() }.distinct()
         val had = now.associateBy { it.lowercase() }
         val problems = buildList {
@@ -61,7 +61,7 @@ class FaSettingsRepository(private val fa: FaClient) {
         }.filterNotNull()
         val after = fa.read(path) { entry(it, setting) }
         val got = (after.editor as? FaSettingEditor.Tags)?.tags.orEmpty().map { it.lowercase() }.toSet()
-        if (got != wanted.toSet()) throw IOException(problems.firstOrNull() ?: "Fur Affinity didn't take the change.")
+        if (got != wanted.toSet()) throw IOException(problems.firstOrNull() ?: Words.get(Words.Text.SettingRefused))
         return after
     }
 
@@ -70,7 +70,7 @@ class FaSettingsRepository(private val fa: FaClient) {
         repeat(4) {
             val answer = fa.postMultipart(TAG_BLOCKING, listOf("action" to action, "key" to key, "tag_name" to tag), emptyList())
             val body = try {
-                JSONObject(answer.document.body().text())
+                JSONObject(answer.raw ?: answer.document.body().text())
             } catch (e: JSONException) {
                 return null
             }
@@ -80,7 +80,7 @@ class FaSettingsRepository(private val fa: FaClient) {
             // Too quick: FA says how long to wait, as its own script does.
             delay((body.optDouble("time-left", 1.0).coerceIn(0.2, 10.0) * 1000).toLong())
         }
-        return "Fur Affinity asks to slow down; try again in a moment."
+        return Words.get(Words.Text.SlowDown)
     }
 
     private fun entry(doc: org.jsoup.nodes.Document, setting: FaSetting) =

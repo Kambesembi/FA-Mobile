@@ -78,7 +78,7 @@ class ExploreRepository(private val fa: FaClient) {
                 if (ticket != generation) return
                 _state.update { apply(it, page, 1, reset = true) }
             } catch (e: IOException) {
-                if (ticket == generation) _state.update { it.copy(refreshing = false, error = e.message ?: "Network error") }
+                if (ticket == generation) _state.update { it.copy(refreshing = false, error = e.message ?: Words.get(Words.Text.Network)) }
             }
         }
     }
@@ -99,7 +99,7 @@ class ExploreRepository(private val fa: FaClient) {
                 }
                 _state.update { apply(it, page, next, reset = false) }
             } catch (e: IOException) {
-                _state.update { if (ticket == generation) it.copy(loadingMore = false, error = e.message ?: "Network error") else it.copy(loadingMore = false) }
+                _state.update { if (ticket == generation) it.copy(loadingMore = false, error = e.message ?: Words.get(Words.Text.Network)) else it.copy(loadingMore = false) }
             }
         }
     }

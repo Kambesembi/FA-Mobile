@@ -515,4 +515,21 @@
     <string name="fa_settings_save">Speichern</string>
     <string name="fa_settings_cancel">Abbrechen</string>
     <string name="fa_settings_tag_add">Tag hinzufügen</string>
+    <!-- Fallback messages of the data layer, and the background check's own notification. -->
+    <string name="words_page_unreadable">Die Seite von Fur Affinity konnte nicht gelesen werden</string>
+    <string name="words_unexpected_page">Fur Affinity hat eine unerwartete Seite geschickt</string>
+    <string name="words_no_submission">Diese Einreichung kann nicht angezeigt werden.</string>
+    <string name="words_no_profile">Diese Benutzerseite konnte nicht gelesen werden.</string>
+    <string name="words_no_journal">Dieses Journal kann nicht angezeigt werden.</string>
+    <string name="words_no_note">Diese Note konnte nicht angezeigt werden.</string>
+    <string name="words_note_prepare">Die Note konnte nicht vorbereitet werden. Bitte versuche es noch einmal.</string>
+    <string name="words_note_unconfirmed">Fur Affinity hat nicht bestätigt, dass die Note gesendet wurde.</string>
+    <string name="words_setting_on_fa">Diese Einstellung lässt sich nicht in der App ändern; nutze „Auf FA ändern“.</string>
+    <string name="words_setting_refused">Fur Affinity hat die Änderung nicht übernommen.</string>
+    <string name="words_slow_down">Fur Affinity bittet um etwas Geduld; versuche es gleich noch einmal.</string>
+    <string name="words_update_unreadable">Die Antwort von GitHub konnte nicht gelesen werden</string>
+    <string name="channel_status">App-Status</string>
+    <string name="check_stopped_title">FA Mobile kann nicht nach Neuem schauen</string>
+    <string name="check_stopped_logged_out">Du bist abgemeldet. Öffne die App und melde dich wieder an.</string>
+    <string name="check_stopped_challenge">Fur Affinity verlangt eine kurze Prüfung. Öffne die App, um fortzufahren.</string>
 </resources>

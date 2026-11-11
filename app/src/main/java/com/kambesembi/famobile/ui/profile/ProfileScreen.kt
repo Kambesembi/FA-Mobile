@@ -1,5 +1,6 @@
 package com.kambesembi.famobile.ui.profile
 
+import com.kambesembi.famobile.data.Words
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -188,7 +189,7 @@ class Paged<T>(
                 started = true
                 if (fresh) generation++
             } catch (e: IOException) {
-                error = e.message ?: "Network error"
+                error = e.message ?: Words.get(Words.Text.Network)
             } finally {
                 loading = false
             }
@@ -222,7 +223,7 @@ class ProfileModel(val name: String, private val repo: ProfileRepository) : View
             try {
                 repo.load(name, force)
             } catch (e: IOException) {
-                error = e.message ?: "Network error"
+                error = e.message ?: Words.get(Words.Text.Network)
             } finally {
                 loading = false
             }
@@ -236,7 +237,7 @@ class ProfileModel(val name: String, private val repo: ProfileRepository) : View
             try {
                 repo.toggleWatch(profile)
             } catch (e: IOException) {
-                error = e.message ?: "Network error"
+                error = e.message ?: Words.get(Words.Text.Network)
             } finally {
                 watchBusy = false
             }

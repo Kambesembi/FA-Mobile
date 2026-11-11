@@ -1,5 +1,6 @@
 package com.kambesembi.famobile.ui.journal
 
+import com.kambesembi.famobile.data.Words
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -99,7 +100,7 @@ fun JournalScreen(id: Long, actions: JournalActions) {
             try {
                 actions.repo.load(id)
             } catch (e: IOException) {
-                error = e.message ?: "Network error"
+                error = e.message ?: Words.get(Words.Text.Network)
             }
         }
     }
@@ -154,7 +155,7 @@ fun JournalScreen(id: Long, actions: JournalActions) {
                             try {
                                 actions.repo.load(id, force = true)
                             } catch (e: IOException) {
-                                snackbar.showSnackbar(e.message ?: "Network error")
+                                snackbar.showSnackbar(e.message ?: Words.get(Words.Text.Network))
                             } finally {
                                 refreshing = false
                             }

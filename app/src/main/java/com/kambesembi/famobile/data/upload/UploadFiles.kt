@@ -92,16 +92,20 @@ object UploadFiles {
                 if (ext !in kind.extensions) throw UploadProblem(context.getString(R.string.upload_wrong_type, upload.name))
                 return@withContext ReadyFile(file, upload.name, upload.mimeType)
             }
-            val accepted = ext in UploadKind.Artwork.extensions
-            if (ext == "gif") {
+            // What the file is, not what it is called: a WebP named .jpg is written anew like any WebP.
+            val real = realType(file)
+            val accepted = real != null && real == (if (ext == "jpeg") "jpg" else ext)
+            if (real == "gif" && accepted) {
                 // Animated GIFs can't be shrunk without losing the animation.
                 if (file.length() > maxBytes) throw UploadProblem(context.getString(R.string.upload_gif_too_big, maxBytes / (1024 * 1024)))
                 return@withContext ReadyFile(file, upload.name, "image/gif")
             }
             if (accepted && file.length() <= maxBytes) {
                 // Couldn't be taken out: write the picture anew, which leaves all of the photo's data behind.
-                if (stripLocation && !removeLocation(file)) return@withContext reencode(context, file, upload.name, maxBytes)
-                return@withContext ReadyFile(file, upload.name, if (ext == "png") "image/png" else "image/jpeg")
+                if (stripLocation && (!removeLocation(file) || hasXmpLocation(file))) {
+                    return@withContext reencode(context, file, upload.name, maxBytes)
+                }
+                return@withContext ReadyFile(file, upload.name, if (real == "png") "image/png" else "image/jpeg")
             }
             reencode(context, file, upload.name, maxBytes)
         }
@@ -160,6 +164,38 @@ object UploadFiles {
             else -> 0
         }
     }.getOrDefault(0)
+
+    /** "jpg", "png" or "gif" by the file's first bytes; null for anything else. */
+    internal fun realType(file: File): String? {
+        val head = ByteArray(8)
+        val read = runCatching { file.inputStream().use { it.read(head) } }.getOrDefault(-1)
+        fun starts(vararg bytes: Int) = read >= bytes.size && bytes.indices.all { head[it] == bytes[it].toByte() }
+        return when {
+            starts(0xFF, 0xD8, 0xFF) -> "jpg"
+            starts(0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A) -> "png"
+            starts(0x47, 0x49, 0x46, 0x38) -> "gif"
+            else -> null
+        }
+    }
+
+    /**
+     * Whether the file still names a place in its XMP data (the second spot cameras and editors
+     * write it to, as text like `exif:GPSLatitude`). An unreadable file counts as "yes".
+     */
+    internal fun hasXmpLocation(file: File): Boolean = runCatching {
+        val mark = "exif:GPS".toByteArray(Charsets.US_ASCII)
+        file.inputStream().buffered().use { input ->
+            var matched = 0
+            while (true) {
+                val b = input.read()
+                if (b < 0) return@use false
+                matched = if (b.toByte() == mark[matched]) matched + 1 else if (b.toByte() == mark[0]) 1 else 0
+                if (matched == mark.size) return@use true
+            }
+            @Suppress("UNREACHABLE_CODE")
+            false
+        }
+    }.getOrDefault(true)
 
     /**
      * Takes the GPS tags out of the app's own copy; the rest of the photo's data stays. False when
