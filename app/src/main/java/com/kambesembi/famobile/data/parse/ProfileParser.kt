@@ -1,5 +1,6 @@
 package com.kambesembi.famobile.data.parse
 
+import com.kambesembi.famobile.data.Words
 import com.kambesembi.famobile.data.model.GalleryPage
 import com.kambesembi.famobile.data.model.JournalPage
 import com.kambesembi.famobile.data.model.JournalSummary
@@ -41,7 +42,7 @@ object ProfileParser {
 
     fun profile(doc: Document, name: String): ProfileResult {
         if (doc.selectFirst("userpage-nav-header") == null) {
-            return ProfileResult.Unavailable(SystemMessageParser.message(doc) ?: "This user page couldn’t be read.")
+            return ProfileResult.Unavailable(SystemMessageParser.message(doc) ?: Words.get(Words.Text.NoProfile))
         }
         val user = user(doc, name)
         val titleBlock = doc.selectFirst("userpage-nav-user-details .user-title")

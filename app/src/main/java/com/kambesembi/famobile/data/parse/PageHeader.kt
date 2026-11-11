@@ -36,4 +36,9 @@ data class PageHeader(
     val blocklist: Blocklist? = null,
     /** FA's own SFW switch on this page (its "sfw" cookie); null when the page has none. */
     val sfw: Boolean? = null,
+    /** FA's own "Log Out", which ends the session on FA's side; null when the page shows none. */
+    val logout: LogoutLink? = null,
 )
+
+/** FA's logout as the page has it: a form to post (with its hidden fields), or a plain link. */
+data class LogoutLink(val path: String, val fields: List<Pair<String, String>>, val post: Boolean)

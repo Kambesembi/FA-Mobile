@@ -39,7 +39,7 @@ class InboxRepository(private val fa: FaClient) {
                 val page = fa.read(FIRST_PAGE) { InboxParser.parse(it) }
                 _state.update { it.copy(items = page.items, nextPath = page.nextPath, loaded = true, refreshing = false) }
             } catch (e: IOException) {
-                _state.update { it.copy(refreshing = false, error = e.message ?: "Network error") }
+                _state.update { it.copy(refreshing = false, error = e.message ?: Words.get(Words.Text.Network)) }
             }
         }
     }
@@ -61,7 +61,7 @@ class InboxRepository(private val fa: FaClient) {
                     )
                 }
             } catch (e: IOException) {
-                _state.update { it.copy(loadingMore = false, error = e.message ?: "Network error") }
+                _state.update { it.copy(loadingMore = false, error = e.message ?: Words.get(Words.Text.Network)) }
             }
         }
     }
@@ -85,7 +85,7 @@ class InboxRepository(private val fa: FaClient) {
             _state.update { apply(it).copy(removing = false) }
             true
         } catch (e: IOException) {
-            _state.update { it.copy(removing = false, error = e.message ?: "Network error") }
+            _state.update { it.copy(removing = false, error = e.message ?: Words.get(Words.Text.Network)) }
             false
         }
     }

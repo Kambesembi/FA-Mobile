@@ -1,5 +1,6 @@
 package com.kambesembi.famobile.data.parse
 
+import com.kambesembi.famobile.data.Words
 import com.kambesembi.famobile.data.model.Journal
 import com.kambesembi.famobile.data.model.JournalResult
 import com.kambesembi.famobile.data.model.Rating
@@ -14,7 +15,7 @@ object JournalParser {
     fun parse(doc: Document, id: Long): JournalResult {
         val title = doc.selectFirst("#c-journalTitleTop__subject")?.text()?.trim()
         if (title == null || doc.selectFirst("userpage-nav-header") == null) {
-            return JournalResult.Unavailable(SystemMessageParser.message(doc) ?: "This journal can't be shown.")
+            return JournalResult.Unavailable(SystemMessageParser.message(doc) ?: Words.get(Words.Text.NoJournal))
         }
         return JournalResult.Loaded(
             Journal(

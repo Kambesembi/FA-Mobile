@@ -1,5 +1,7 @@
 package com.kambesembi.famobile.ui.login
 
+import com.kambesembi.famobile.BuildConfig
+import android.view.WindowManager
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
@@ -71,6 +73,8 @@ class LoginActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         palette = if (intent.getBooleanExtra(EXTRA_DARK, true)) Palette.Dark else Palette.Light
 
+        // Not in screenshots, screen recordings or the recents preview. (Debug builds: CI takes its pictures.)
+        if (!BuildConfig.DEBUG) window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
         WindowCompat.setDecorFitsSystemWindows(window, false)
         WindowCompat.getInsetsController(window, window.decorView).apply {
             isAppearanceLightStatusBars = !palette.dark
@@ -342,6 +346,7 @@ class LoginActivity : ComponentActivity() {
         /** Fills FA's own login form and submits it, unless Cloudflare's check hasn't passed yet. */
         private val SUBMIT_JS = """
             (function(user, pass) {
+              if (location.protocol !== 'https:' || location.hostname !== 'www.furaffinity.net') return 'noform';
               var form = document.querySelector('form[action*="login"]');
               var name = form && form.querySelector('input[name=name]');
               var pw = form && form.querySelector('input[name=pass]');

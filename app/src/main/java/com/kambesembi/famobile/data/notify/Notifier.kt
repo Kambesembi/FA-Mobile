@@ -139,9 +139,41 @@ object Notifier {
         else -> line(context, line) to null
     }
 
+    /**
+     * The background check can't look any more ([loggedOut], or else Cloudflare wants its check):
+     * said once, so the missing notifications aren't taken for "nothing new".
+     */
+    fun stopped(context: Context, loggedOut: Boolean) {
+        if (!canPost(context)) return
+        val manager = context.getSystemService(NotificationManager::class.java) ?: return
+        manager.createNotificationChannel(
+            NotificationChannel(STATUS_CHANNEL, context.getString(R.string.channel_status), NotificationManager.IMPORTANCE_DEFAULT),
+        )
+        val open = Intent(context, MainActivity::class.java).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        val pending = PendingIntent.getActivity(context, STATUS_ID, open, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        val text = context.getString(if (loggedOut) R.string.check_stopped_logged_out else R.string.check_stopped_challenge)
+        val notification = NotificationCompat.Builder(context, STATUS_CHANNEL)
+            .setSmallIcon(R.drawable.ic_stat_paw)
+            .setColor(0xFFF0C27A.toInt())
+            .setContentTitle(context.getString(R.string.check_stopped_title))
+            .setContentText(text)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(text))
+            .setContentIntent(pending)
+            .setAutoCancel(true)
+            .build()
+        try {
+            NotificationManagerCompat.from(context).notify(STATUS_ID, notification)
+        } catch (_: SecurityException) {
+        }
+    }
+
+    private const val STATUS_CHANNEL = "status"
+    private const val STATUS_ID = 7100
+
     /** The app is open and shows the counters, so the notifications have done their job (uploads' stay). */
     fun clear(context: Context) {
         val manager = NotificationManagerCompat.from(context)
         Category.entries.forEach { manager.cancel(it.ordinal) }
+        manager.cancel(STATUS_ID)
     }
 }

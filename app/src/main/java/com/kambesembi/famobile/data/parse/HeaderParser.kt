@@ -23,7 +23,17 @@ object HeaderParser {
             null
         }
         val sfw = doc.selectFirst(".sfw-toggle input[type=checkbox]")?.hasAttr("checked")
-        return PageHeader(user, if (user == null) Counts() else parseCounts(doc), present, blocklist, sfw)
+        return PageHeader(user, if (user == null) Counts() else parseCounts(doc), present, blocklist, sfw, if (user == null) null else logout(doc))
+    }
+
+    /** The header's "Log Out": a small form with a key, or (older pages) a link. */
+    private fun logout(doc: Document): LogoutLink? {
+        doc.selectFirst("form[action*=/logout]")?.let { form ->
+            val fields = form.select("input[type=hidden][name]").map { it.attr("name") to it.attr("value") }
+            val post = !form.attr("method").equals("get", ignoreCase = true)
+            return LogoutLink(form.attr("action"), fields, post)
+        }
+        return doc.selectFirst("a[href*=/logout]")?.attr("href")?.takeIf { it.isNotBlank() }?.let { LogoutLink(it, emptyList(), post = false) }
     }
 
     private fun parseUser(doc: Document): LoggedInUser? {

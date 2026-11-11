@@ -5,7 +5,13 @@ import java.io.IOException
 import org.jsoup.nodes.Document
 
 /** A parsed FA page. */
-class FaPage(val url: String, val document: Document, val header: PageHeader)
+class FaPage(
+    val url: String,
+    val document: Document,
+    val header: PageHeader,
+    /** The answer as FA sent it, for the few that aren't pages (JSON); null where only the page is kept. */
+    val raw: String? = null,
+)
 
 /** Where FA pages come from: the network, or saved pages in demo mode. */
 interface PageSource {
@@ -40,5 +46,8 @@ class ChallengeRequired(val url: String) : IOException("Cloudflare check require
 
 /** The user closed the Cloudflare check. */
 class ChallengeCancelled : IOException("Cloudflare check cancelled")
+
+/** The login ended (logout) while this request was on its way: its answer belongs to nobody. */
+class SessionEnded : IOException("Logged out")
 
 class FaHttpException(val code: Int, url: String) : IOException("HTTP $code for $url")

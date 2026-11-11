@@ -26,7 +26,7 @@ class ProfileRepository(private val fa: FaClient) {
         val key = name.lowercase()
         if (!force) _profiles.value[key]?.let { return it }
         val result = fa.read("/user/$key/") { ProfileParser.profile(it, key) }
-        _profiles.update { it + (key to result) }
+        _profiles.update { it.keepRecent(key, result) }
         return result
     }
 

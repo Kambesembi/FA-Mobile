@@ -31,7 +31,7 @@ class ActivityRepository(private val fa: FaClient) {
             val sections = fa.read(PAGE) { ActivityParser.parse(it) }
             _state.update { it.copy(sections = sections, loaded = true, refreshing = false) }
         } catch (e: IOException) {
-            _state.update { it.copy(refreshing = false, error = e.message ?: "Network error") }
+            _state.update { it.copy(refreshing = false, error = e.message ?: Words.get(Words.Text.Network)) }
         }
     }
 
@@ -59,11 +59,11 @@ class ActivityRepository(private val fa: FaClient) {
         return try {
             val page = fa.post(PAGE, form)
             // FA answers with the updated page; fall back to the local change if it can't be read.
-            val fresh = ActivityParser.parse(page.document).takeIf { page.document.selectFirst("form[action*=/msg/others]") != null }
+            val fresh = fa.parsed(page) { doc -> ActivityParser.parse(doc).takeIf { doc.selectFirst("form[action*=/msg/others]") != null } }
             _state.update { it.copy(sections = fresh ?: apply(it.sections), removing = false) }
             true
         } catch (e: IOException) {
-            _state.update { it.copy(removing = false, error = e.message ?: "Network error") }
+            _state.update { it.copy(removing = false, error = e.message ?: Words.get(Words.Text.Network)) }
             false
         }
     }
