@@ -1,5 +1,6 @@
 package com.kambesembi.famobile
 
+import com.kambesembi.famobile.data.update.UpdatedReceiver
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -43,6 +44,7 @@ class MainActivity : ComponentActivity() {
         }
         if (BuildConfig.DEBUG && container.isDemo) container.setDemoSlowViews(intent.getBooleanExtra("demoSlow", false))
         container.startBackground()
+        UpdatedReceiver.clear(this)
         // Debug only: sample notifications, so CI can screenshot the notification shade.
         if (BuildConfig.DEBUG && intent.getBooleanExtra("demoNotify", false)) {
             Notifier.createChannels(this)

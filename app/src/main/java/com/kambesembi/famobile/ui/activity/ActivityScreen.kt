@@ -1,5 +1,7 @@
 package com.kambesembi.famobile.ui.activity
 
+import androidx.compose.foundation.lazy.rememberLazyListState
+import com.kambesembi.famobile.ui.components.ScrollTopOnReload
 import android.text.format.DateUtils
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -95,7 +97,10 @@ fun ActivityScreen(
         }
     }
 
+    val listState = rememberLazyListState()
+    ScrollTopOnReload(state.refreshing) { listState.scrollToItem(0) }
     LazyColumn(
+        state = listState,
         contentPadding = PaddingValues(horizontal = readableSide(12.dp), vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
         modifier = Modifier.fillMaxSize(),

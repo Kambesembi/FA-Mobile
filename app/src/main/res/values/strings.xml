@@ -49,7 +49,9 @@
     <string name="update_retry">Try again</string>
     <string name="update_allow">Allow</string>
     <string name="update_downloading">Downloading the new version…</string>
-    <string name="update_installing">Installing… Confirm on Android’s screen if it asks.</string>
+    <string name="update_installing">Installing… Confirm on Android’s screen if it asks. The app closes while it is installed; a notification tells you when it is ready.</string>
+    <string name="updated_notify_title">FA Mobile was updated to %1$s</string>
+    <string name="updated_notify_text">Tap to open the app.</string>
     <string name="update_permission">Android first needs your OK for FA Mobile to install its updates. Turn on “Allow from this source” on the next screen, then come back here.</string>
     <string name="update_install_failed">Couldn’t update: %1$s</string>
     <string name="update_no_apk">the release has no APK</string>

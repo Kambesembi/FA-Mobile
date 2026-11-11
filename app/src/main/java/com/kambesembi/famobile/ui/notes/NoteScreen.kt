@@ -1,5 +1,9 @@
 package com.kambesembi.famobile.ui.notes
 
+import com.kambesembi.famobile.data.FaUrls
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.clickable
 import android.text.format.DateUtils
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -160,9 +164,9 @@ private fun NoteContent(note: Note, onLink: (String) -> Unit) {
         }
         item {
             Bubble(Modifier.fillMaxWidth()) {
-                Person(R.string.note_from, note.from, note.sentAt)
+                Person(R.string.note_from, note.from, note.sentAt, onLink)
                 Spacer(Modifier.size(8.dp))
-                Person(R.string.note_to, note.to, null)
+                Person(R.string.note_to, note.to, null, onLink)
             }
         }
         item {
@@ -174,8 +178,12 @@ private fun NoteContent(note: Note, onLink: (String) -> Unit) {
 }
 
 @Composable
-private fun Person(label: Int, user: UserRef?, sentAt: Long?) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
+private fun Person(label: Int, user: UserRef?, sentAt: Long?, onLink: (String) -> Unit) {
+    // The whole row (picture, name) opens the user's page.
+    val open = Modifier.fillMaxWidth().clip(MaterialTheme.shapes.small).let { row ->
+        if (user == null) row else row.clickable(role = Role.Button) { onLink(FaUrls.absolute("/user/${user.name}/")) }
+    }
+    Row(open.padding(vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
         Text(
             stringResource(label),
             style = MaterialTheme.typography.labelMedium,

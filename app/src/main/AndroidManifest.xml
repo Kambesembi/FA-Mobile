@@ -75,6 +75,15 @@
             android:name=".data.update.InstallReceiver"
             android:exported="false" />
 
+        <!-- The new version, right after an update: brings the app back (or says it is ready). -->
+        <receiver
+            android:name=".data.update.UpdatedReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
         <!-- WorkManager's own service, told what the upload's foreground work is for. -->
         <service
             android:name="androidx.work.impl.foreground.SystemForegroundService"

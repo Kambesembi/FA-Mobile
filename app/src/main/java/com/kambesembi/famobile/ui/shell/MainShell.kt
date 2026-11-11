@@ -1,5 +1,9 @@
 package com.kambesembi.famobile.ui.shell
 
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.saveable.listSaver
+import com.kambesembi.famobile.ui.components.LocalReloadTop
+import com.kambesembi.famobile.ui.components.ReloadTop
 import android.os.SystemClock
 import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
@@ -218,7 +222,9 @@ fun MainShell(
     // A tab loads when it is first shown, and again on its way back when FA's count for it went up
     // (something new came in while another tab was shown); Activity and Notes also when they were
     // last shown a while ago.
-    val lastShown = remember { mutableMapOf<Tab, Pair<Int, Long>>() }
+    // Kept while another screen (a submission, a note) covers the tabs: coming back is not a first
+    // showing, and loads nothing unless FA's count grew or the tab is stale.
+    val lastShown = rememberSaveable(saver = lastShownSaver) { mutableMapOf<Tab, Pair<Int, Long>>() }
     val shownCount = tab.badge(state.counts)
     LaunchedEffect(tab, shownCount) {
         val now = SystemClock.elapsedRealtime()
@@ -237,7 +243,11 @@ fun MainShell(
     // Back after a while away (a notification may have said there is something new): load again,
     // the counts and the tab on screen, without a pull.
     val lifecycle = LocalLifecycleOwner.current.lifecycle
+    val reloadTop = remember { ReloadTop() }
+    // Only the tab that was on screen when the app came back goes to the top.
+    LaunchedEffect(tab) { reloadTop.pending = false }
     val reloadShown by rememberUpdatedState<() -> Unit> {
+        reloadTop.pending = true
         onRefresh()
         when (tab) {
             Tab.Inbox -> if (inbox.state.loaded && !inbox.state.refreshing) inbox.refresh()
@@ -351,37 +361,39 @@ fun MainShell(
                     .weight(1f)
                     .fillMaxHeight(),
             ) {
-                if (tab == Tab.Notes) {
-                    NotesScreen(
-                        state = notes.state,
-                        demo = demo,
-                        onFolder = notes.folder,
-                        onOpen = notes.open,
-                        onLoadMore = notes.loadMore,
-                        onRetry = notes.refresh,
-                    )
-                } else if (tab == Tab.Activity) {
-                    ActivityScreen(
-                        state = activity.state,
-                        demo = demo,
-                        onOpen = activity.open,
-                        onOpenUser = activity.openUser,
-                        onRemove = activity.remove,
-                        onClear = activity.clear,
-                        onRetry = activity.refresh,
-                    )
-                } else if (tab == Tab.Inbox) {
-                    InboxScreen(
-                        state = inbox.state,
-                        selection = selection,
-                        demo = demo,
-                        onOpen = inbox.open,
-                        onToggleSelect = { id -> selection = if (id in selection) selection - id else selection + id },
-                        onLoadMore = inbox.loadMore,
-                        onRetry = inbox.refresh,
-                    )
-                } else {
-                    ExploreScreen(explore, demo)
+                CompositionLocalProvider(LocalReloadTop provides reloadTop) {
+                    if (tab == Tab.Notes) {
+                        NotesScreen(
+                            state = notes.state,
+                            demo = demo,
+                            onFolder = notes.folder,
+                            onOpen = notes.open,
+                            onLoadMore = notes.loadMore,
+                            onRetry = notes.refresh,
+                        )
+                    } else if (tab == Tab.Activity) {
+                        ActivityScreen(
+                            state = activity.state,
+                            demo = demo,
+                            onOpen = activity.open,
+                            onOpenUser = activity.openUser,
+                            onRemove = activity.remove,
+                            onClear = activity.clear,
+                            onRetry = activity.refresh,
+                        )
+                    } else if (tab == Tab.Inbox) {
+                        InboxScreen(
+                            state = inbox.state,
+                            selection = selection,
+                            demo = demo,
+                            onOpen = inbox.open,
+                            onToggleSelect = { id -> selection = if (id in selection) selection - id else selection + id },
+                            onLoadMore = inbox.loadMore,
+                            onRetry = inbox.refresh,
+                        )
+                    } else {
+                        ExploreScreen(explore, demo)
+                    }
                 }
             }
         }
@@ -648,6 +660,12 @@ fun LogoutDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
 }
 
 /** A tab last shown this long ago loads again when it comes back. */
+/** [Tab] to (count, when shown), as plain lists for the saved state. */
+private val lastShownSaver = listSaver<MutableMap<Tab, Pair<Int, Long>>, List<Long>>(
+    save = { map -> map.map { (tab, shown) -> listOf(tab.ordinal.toLong(), shown.first.toLong(), shown.second) } },
+    restore = { rows -> rows.associateTo(mutableMapOf()) { Tab.entries[it[0].toInt()] to (it[1].toInt() to it[2]) } },
+)
+
 private const val TAB_STALE_MS = 2 * 60 * 1000L
 
 /** Away from the app this long, and its pages load again on return. */

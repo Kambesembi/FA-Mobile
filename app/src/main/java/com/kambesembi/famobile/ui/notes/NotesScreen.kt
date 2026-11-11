@@ -1,5 +1,6 @@
 package com.kambesembi.famobile.ui.notes
 
+import com.kambesembi.famobile.ui.components.ScrollTopOnReload
 import android.text.format.DateUtils
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -57,6 +58,7 @@ fun NotesScreen(
     onRetry: () -> Unit,
 ) {
     val listState = rememberLazyListState()
+    ScrollTopOnReload(state.refreshing) { listState.scrollToItem(0) }
     val loadMore by rememberUpdatedState(onLoadMore)
     LaunchedEffect(listState, state.notes.size) {
         snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0 }
