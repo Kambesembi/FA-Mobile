@@ -90,7 +90,7 @@ class Updates(private val context: Context, private val settings: AppSettings) {
 
     companion object {
         private const val WORK = "update-check"
-        private const val CHANNEL = "updates"
+        internal const val CHANNEL = "updates"
         private const val NOTIFICATION_ID = 7200
 
         fun createChannel(context: Context) {
