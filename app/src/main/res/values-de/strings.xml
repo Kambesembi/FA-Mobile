@@ -45,7 +45,9 @@
     <string name="update_retry">Nochmal</string>
     <string name="update_allow">Erlauben</string>
     <string name="update_downloading">Neue Version wird geladen…</string>
-    <string name="update_installing">Wird installiert… Bestätige auf Androids Bildschirm, falls gefragt.</string>
+    <string name="update_installing">Wird installiert … Bestätige auf Androids Bildschirm, falls es fragt. Die App schließt sich während der Installation; eine Benachrichtigung sagt dir, wenn sie fertig ist.</string>
+    <string name="updated_notify_title">FA Mobile wurde auf %1$s aktualisiert</string>
+    <string name="updated_notify_text">Tippe, um die App zu öffnen.</string>
     <string name="update_permission">Android braucht erst dein OK, damit FA Mobile seine Updates installieren darf. Schalte auf dem nächsten Bildschirm „Dieser Quelle vertrauen“ ein und komm dann zurück.</string>
     <string name="update_install_failed">Aktualisieren ging nicht: %1$s</string>
     <string name="update_no_apk">die Version hat keine APK</string>

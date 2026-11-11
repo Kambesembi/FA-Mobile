@@ -45,7 +45,9 @@
     <string name="update_retry">Ещё раз</string>
     <string name="update_allow">Разрешить</string>
     <string name="update_downloading">Скачивается новая версия…</string>
-    <string name="update_installing">Установка… Подтвердите на экране Android, если он спросит.</string>
+    <string name="update_installing">Установка… Подтвердите на экране Android, если он спросит. Приложение закроется на время установки; уведомление сообщит, когда всё будет готово.</string>
+    <string name="updated_notify_title">FA Mobile обновлён до версии %1$s</string>
+    <string name="updated_notify_text">Нажмите, чтобы открыть приложение.</string>
     <string name="update_permission">Сначала Android должен разрешить FA Mobile устанавливать свои обновления. Включите «Разрешить установку из этого источника» на следующем экране и вернитесь сюда.</string>
     <string name="update_install_failed">Не удалось обновить: %1$s</string>
     <string name="update_no_apk">в выпуске нет APK</string>
