@@ -19,7 +19,7 @@ class JournalRepository(private val fa: FaClient) {
     suspend fun load(id: Long, force: Boolean = false): JournalResult {
         if (!force) _loaded.value[id]?.let { return it }
         val result = fa.read("/journal/$id/") { JournalParser.parse(it, id) }
-        _loaded.update { it + (id to result) }
+        _loaded.update { it.keepRecent(id, result) }
         return result
     }
 

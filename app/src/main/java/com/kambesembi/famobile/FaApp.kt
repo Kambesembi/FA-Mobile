@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import coil.ImageLoader
 import coil.ImageLoaderFactory
+import com.kambesembi.famobile.data.Words
 import com.kambesembi.famobile.data.AppLanguage
 
 class FaApp : Application(), ImageLoaderFactory {
@@ -18,6 +19,7 @@ class FaApp : Application(), ImageLoaderFactory {
 
     override fun onCreate() {
         super.onCreate()
+        Words.context = this
         container = AppContainer(this)
     }
 

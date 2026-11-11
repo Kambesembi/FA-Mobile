@@ -526,4 +526,21 @@
     <string name="fa_settings_save">Save</string>
     <string name="fa_settings_cancel">Cancel</string>
     <string name="fa_settings_tag_add">Add a tag</string>
+    <!-- Fallback messages of the data layer, and the background check's own notification. -->
+    <string name="words_page_unreadable">Fur Affinity’s page couldn’t be read</string>
+    <string name="words_unexpected_page">Fur Affinity sent an unexpected page</string>
+    <string name="words_no_submission">This submission can’t be shown.</string>
+    <string name="words_no_profile">This user page couldn’t be read.</string>
+    <string name="words_no_journal">This journal can’t be shown.</string>
+    <string name="words_no_note">This note couldn’t be shown.</string>
+    <string name="words_note_prepare">Couldn’t prepare the note. Please try again.</string>
+    <string name="words_note_unconfirmed">Fur Affinity didn’t confirm the note was sent.</string>
+    <string name="words_setting_on_fa">This setting can’t be changed from the app; use “Change on FA”.</string>
+    <string name="words_setting_refused">Fur Affinity didn’t take the change.</string>
+    <string name="words_slow_down">Fur Affinity asks to slow down; try again in a moment.</string>
+    <string name="words_update_unreadable">GitHub’s answer couldn’t be read</string>
+    <string name="channel_status">App status</string>
+    <string name="check_stopped_title">FA Mobile can’t check for news</string>
+    <string name="check_stopped_logged_out">You’re logged out. Open the app and log in again.</string>
+    <string name="check_stopped_challenge">Fur Affinity wants a quick check. Open the app to continue.</string>
 </resources>

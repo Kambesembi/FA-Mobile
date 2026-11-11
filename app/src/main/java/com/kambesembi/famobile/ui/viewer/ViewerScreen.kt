@@ -1,5 +1,7 @@
 package com.kambesembi.famobile.ui.viewer
 
+import androidx.compose.runtime.rememberUpdatedState
+import com.kambesembi.famobile.data.Words
 import android.text.format.DateUtils
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
@@ -139,11 +141,16 @@ class ViewerActions(
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ViewerScreen(ids: List<Long>, startId: Long, actions: ViewerActions) {
+fun ViewerScreen(ids: List<Long>, startId: Long, actions: ViewerActions, onNearEnd: (() -> Unit)? = null) {
     val pager = rememberPagerState(initialPage = ids.indexOf(startId).coerceAtLeast(0)) { ids.size }
     val snackbar = remember { SnackbarHostState() }
 
     LaunchedEffect(ids.isEmpty()) { if (ids.isEmpty()) actions.back() }
+    // A list that can grow (Explore): close to its end, ask for more.
+    val nearEnd by rememberUpdatedState(onNearEnd)
+    LaunchedEffect(pager.settledPage, ids.size) {
+        if (pager.settledPage >= ids.size - 3) nearEnd?.invoke()
+    }
 
     // Load the neighbour ahead of time, so swiping on feels instant (one page, as a reader would):
     // its page and FA's preview image, not the full file, to spare slow connections.
@@ -205,7 +212,7 @@ private fun SubmissionPage(id: Long, actions: ViewerActions, snackbar: SnackbarH
             try {
                 actions.repo.load(id)
             } catch (e: IOException) {
-                error = e.message ?: "Network error"
+                error = e.message ?: Words.get(Words.Text.Network)
             }
         }
     }

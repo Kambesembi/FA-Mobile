@@ -20,13 +20,13 @@ e-mail addresses or real form keys; the three string files have the same entries
 cleartext traffic is off by default; the update is safe against a swapped APK because Android
 checks the signature.
 
-## Status (2026-11-10, after two rounds of fixes)
+## Status (2026-11-11, after three rounds of fixes)
 
-Fixed, each marked below: bugs 1 to 6 (of 3 and 6, the main part), and from the smaller ones the
-`screen` extra, the Cloudflare check's address, the stale note key, Explore's "loading more", the
-doubled submission request and the background check's cancellation. Bug 7 was tried on a phone and
-does not happen. In CI, the write permission and the release notes are done. Everything else is
-open.
+All bugs are fixed or settled (7 did not happen on a phone). Under "Decisions worth a second look",
+each entry now says what was done. Still open there: notifications by item instead of by counter,
+downloads on Android 8 and 9, and the two entries about the debug build and the demo code, left as
+they are because there is one build line for now. "Build and CI", "Tests" and "Documentation" are
+open except where marked.
 
 ## Bugs
 
@@ -71,7 +71,8 @@ cancellation.
 ### 3. "Remove location" fails open
 
 **Fixed (the first paragraph):** when the tags can't be removed, or are still there afterwards, the
-picture is re-encoded, which drops all of its metadata. The two smaller holes below are open.
+picture is re-encoded, which drops all of its metadata. So is a picture that names a place in its
+XMP data, and one whose content isn't what its name says.
 
 `data/upload/UploadFiles.kt:157-165`
 
@@ -123,7 +124,8 @@ series link. A short one like "my first commission" still counts. Tested in `Com
 
 **Fixed (the first paragraph):** every upload keeps the account it was queued under. Another account
 sees and sends only its own; the first one's form is put aside and its queue goes on when it logs
-in again. FA's own logout and cancelling requests under way are still open.
+in again. Logging out now also sends FA's own "Log Out" first (read from the page header; the form's
+shape is assumed, not yet seen on a live page), and answers that arrive after a logout are dropped.
 
 `AppContainer.kt:177-187`, `data/UploadRepository.kt:455`
 
@@ -168,57 +170,71 @@ intent has `FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY`.
 - **Two requests for one page.** *(Fixed: one request per submission at a time.)* The viewer loads the next submission ahead
   (`ui/viewer/ViewerScreen.kt:154`) and the page itself loads it again if the swipe comes first;
   `SubmissionRepository.load` has no "already on its way" check.
-- **The background check swallows cancellation** *(fixed; the new client per run is unchanged)* (`data/notify/CheckWorker.kt:33`, `runCatching`
+- **The background check swallows cancellation** *(fixed; the background work now shares one client)* (`data/notify/CheckWorker.kt:33`, `runCatching`
   around a suspending call) and builds a new `OkHttpClient` on every run.
 
 ## Decisions worth a second look
 
-- **Notifications follow counters, not items** (`data/notify/ActivityCheck.kt:39`). News is
+- *(Open: exact tracking needs the detail pages on every check, three more requests each time.)*
+  **Notifications follow counters, not items** (`data/notify/ActivityCheck.kt:39`). News is
   "the counter is higher than last time". If three comments are removed on the website and three new
   ones arrive between two checks, nothing is announced. Remembering the newest item id per category
   would be exact, and the detail pages are already loaded when a counter grows.
-- **A silent stop.** When the session has expired or Cloudflare wants a check, the background check
+- *(Done: one notification when the check finds the login gone, or Cloudflare's check three rounds in a row.)*
+  **A silent stop.** When the session has expired or Cloudflare wants a check, the background check
   returns quietly, every time, for good. One notification "Open the app to keep getting
   notifications" would tell the user.
-- **Notes details depend on the folder last shown.** FA keeps the notes folder on its side; the
+- *(Done: the check asks for the inbox, unless the app is showing another folder at that moment.)*
+  **Notes details depend on the folder last shown.** FA keeps the notes folder on its side; the
   check reads `/msg/pms/` in whatever folder the app switched to last, so after looking at Sent or
   Archive the notification falls back to a bare count.
-- **One lock for all requests, held for the whole request** (`data/net/LiveSource.kt:69-79`). It is
+- *(Partly: requests can now be cancelled and hold no thread; the one-at-a-time lock stays, on purpose.)*
+  **One lock for all requests, held for the whole request** (`data/net/LiveSource.kt:69-79`). It is
   what keeps the app polite, but one slow page (30 s timeout) holds up everything behind it,
   including the login check. The calls are blocking `execute()`s inside a coroutine, so cancelling a
   screen does not cancel its request. A cancellable call (`suspendCancellableCoroutine` with
   `call.cancel()`) would fix the second part and also make bug 1 easier to handle.
-- **No waiting on 429/503.** Only uploads read FA's flood message. Page loads report the HTTP code
+- *(Done for page loads: up to two waits, as long as FA says or 3 s and 8 s. Forms are never re-sent. No page cache.)*
+  **No waiting on 429/503.** Only uploads read FA's flood message. Page loads report the HTTP code
   and stop. PLAN.md also promises "cached pages" and backing off when many users are online; neither
   exists.
-- **`FaClient.read` is not used everywhere.** It exists so a parser tripping over changed markup
+- *(Done: `FaClient.parsed` for pages that are already there.)*
+  **`FaClient.read` is not used everywhere.** It exists so a parser tripping over changed markup
   becomes an error message, off the main thread. `NotesRepository.open` (line 95),
   `ActivityRepository.submit` (line 62), `postReply` (`Posting.kt:25`) and `UploadRepository.prepare`
   parse the page themselves, on the main thread, without that net.
-- **FA's JSON answer is read through the HTML parser** (`data/FaSettingsRepository.kt:73`). It works
+- *(Done: the raw answer is kept and used.)*
+  **FA's JSON answer is read through the HTML parser** (`data/FaSettingsRepository.kt:73`). It works
   for the short answers FA sends now; a `<` or `&` in an error text would change it. A raw-body
   request in `PageSource` would be exact.
-- **The password is put into whatever page the login WebView shows** (`ui/login/LoginActivity.kt:170`).
+- *(Done: the script checks https and the host; release builds set `FLAG_SECURE` on the login.)*
+  **The password is put into whatever page the login WebView shows** (`ui/login/LoginActivity.kt:170`).
   Navigation is held to `*.furaffinity.net` and Cloudflare's check host, so the risk is small, but
   checking `location.protocol` and `location.hostname === 'www.furaffinity.net'` inside the script
   costs one line. `FLAG_SECURE` on that screen would keep the fields out of screenshots.
-- **The debug build is signed with the release key** (`app/build.gradle.kts:48`) and uploaded as a
+- *(Left as it is: one build line for now.)*
+  **The debug build is signed with the release key** (`app/build.gradle.kts:48`) and uploaded as a
   CI artifact. It is debuggable, has the exported login activity and the demo extras, and installs
   over the real app with its data. An `applicationIdSuffix = ".debug"` or the plain debug key for the
   artifact avoids that.
-- **Id lists travel in navigation routes** (`ui/AppRoot.kt:314` and four more). A long Explore
+- *(Done: lists wait in the container under a ticket; the viewer opened from Explore loads further pages.)*
+  **Id lists travel in navigation routes** (`ui/AppRoot.kt:314` and four more). A long Explore
   session puts thousands of ids into one route string that is saved with the back stack. The list is
   also fixed when the viewer opens, so swiping ends where the grid had loaded to. A shared holder in
   the container (as the inbox viewer nearly does) solves both.
-- **Memory.** Profiles and journals are kept for the whole run without a cap
+- *(Done: the 30 most recent of each.)*
+  **Memory.** Profiles and journals are kept for the whole run without a cap
   (`data/ProfileRepository.kt:21`, `data/JournalRepository.kt:15`); submissions are capped at 60.
-- **Downloads on Android 8 and 9** go to the app's own folder (`ui/util/Actions.kt:45`), where no
+- *(Open: needs a storage permission and a phone with Android 8 or 9 to try it.)*
+  **Downloads on Android 8 and 9** go to the app's own folder (`ui/util/Actions.kt:45`), where no
   gallery sees them. `MediaStore` or the storage permission for those two versions would put them
   with the others.
-- **English-only messages in a three-language app.** About twenty fallback texts in the data layer
+- *(Done: `Words`, with German and Russian texts.)*
+  **English-only messages in a three-language app.** About twenty fallback texts in the data layer
   ("Network error", "This note couldn't be shown.", "Fur Affinity didn't take the change.") are
   fixed strings, next to FA's own messages which are rightly left as FA sends them.
-- **`DemoSource` ships in release builds** (`AppContainer.kt:73`). It can't be switched on there,
+- *(Left as it is: one build line for now.)*
+  **`DemoSource` ships in release builds** (`AppContainer.kt:73`). It can't be switched on there,
   but it belongs in the debug source set next to its fixtures.
 
 ## Build and CI

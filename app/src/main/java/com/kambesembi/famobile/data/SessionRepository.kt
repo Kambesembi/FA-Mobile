@@ -1,6 +1,7 @@
 package com.kambesembi.famobile.data
 
 import com.kambesembi.famobile.data.net.ChallengeCancelled
+import com.kambesembi.famobile.data.net.SessionEnded
 import com.kambesembi.famobile.data.parse.Counts
 import com.kambesembi.famobile.data.parse.LoggedInUser
 import java.io.IOException
@@ -41,6 +42,8 @@ class SessionRepository(private val fa: FaClient, scope: CoroutineScope) {
         data object Idle : Status
         data object Refreshing : Status
         data object LoggedOut : Status
+        /** Logging out: FA is being told, the cookies are still there. */
+        data object Leaving : Status
         data class Failed(val error: SessionError) : Status
     }
 
@@ -49,6 +52,7 @@ class SessionRepository(private val fa: FaClient, scope: CoroutineScope) {
     val state: StateFlow<SessionState> = combine(status, fa.header) { s, header ->
         when {
             s == Status.LoggedOut -> SessionState.LoggedOut
+            s == Status.Leaving -> SessionState.Starting
             header == null -> if (s is Status.Failed) SessionState.Unreachable(s.error) else SessionState.Starting
             header.user == null -> SessionState.LoggedOut
             else -> SessionState.LoggedIn(
@@ -66,6 +70,8 @@ class SessionRepository(private val fa: FaClient, scope: CoroutineScope) {
         status.value = try {
             fa.headerPage(FaUrls.COUNTS_PAGE)
             Status.Idle
+        } catch (e: SessionEnded) {
+            return // logged out meanwhile: logout() says what the state is
         } catch (e: ChallengeCancelled) {
             Status.Failed(SessionError.ChallengeCancelled)
         } catch (e: IOException) {
@@ -73,8 +79,9 @@ class SessionRepository(private val fa: FaClient, scope: CoroutineScope) {
         }
     }
 
-    fun logout() {
-        fa.clearSession()
+    suspend fun logout() {
+        status.value = Status.Leaving
+        fa.endSession()
         status.value = Status.LoggedOut
     }
 }

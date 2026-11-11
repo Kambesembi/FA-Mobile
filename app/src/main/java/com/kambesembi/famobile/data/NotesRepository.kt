@@ -64,7 +64,7 @@ class NotesRepository(private val fa: FaClient) {
                     else it.copy(notes = page.notes, nextPath = page.nextPath, loaded = true, refreshing = false)
                 }
             } catch (e: IOException) {
-                _state.update { it.copy(refreshing = false, error = e.message ?: "Network error") }
+                _state.update { it.copy(refreshing = false, error = e.message ?: Words.get(Words.Text.Network)) }
             }
         }
     }
@@ -86,7 +86,7 @@ class NotesRepository(private val fa: FaClient) {
                     )
                 }
             } catch (e: IOException) {
-                _state.update { it.copy(loadingMore = false, error = e.message ?: "Network error") }
+                _state.update { it.copy(loadingMore = false, error = e.message ?: Words.get(Words.Text.Network)) }
             }
         }
     }
@@ -95,16 +95,17 @@ class NotesRepository(private val fa: FaClient) {
     suspend fun open(id: Long, force: Boolean = false) {
         if (!force && _opened.value[id] is NoteResult.Loaded) return
         val result = try {
-            val doc = fa.page("/msg/pms/1/$id/").document
-            val note = NotesParser.note(doc, id)
+            val page = fa.page("/msg/pms/1/$id/")
+            val doc = page.document
+            val note = fa.parsed(page) { NotesParser.note(it, id) }
             if (note != null) {
                 remember(note.sendKey, null)
                 NoteResult.Loaded(note)
             } else {
-                NoteResult.Failed(SystemMessageParser.message(doc) ?: "This note couldn't be shown.")
+                NoteResult.Failed(SystemMessageParser.message(doc) ?: Words.get(Words.Text.NoNote))
             }
         } catch (e: IOException) {
-            NoteResult.Failed(e.message ?: "Network error")
+            NoteResult.Failed(e.message ?: Words.get(Words.Text.Network))
         }
         _opened.update { it + (id to result) }
         if (result is NoteResult.Loaded) markLocally(setOf(id), unread = false)
@@ -122,7 +123,7 @@ class NotesRepository(private val fa: FaClient) {
             }
             true
         } catch (e: IOException) {
-            _state.update { it.copy(error = e.message ?: "Network error") }
+            _state.update { it.copy(error = e.message ?: Words.get(Words.Text.Network)) }
             false
         }
     }
@@ -131,7 +132,7 @@ class NotesRepository(private val fa: FaClient) {
     suspend fun send(to: String, subject: String, message: String): String? {
         return try {
             val key = sendKey ?: fa.read("/msg/pms/") { NotesParser.list(it) }.sendKey.also { sendKey = it }
-                ?: return "Couldn't prepare the note. Please try again."
+                ?: return Words.get(Words.Text.NotePrepare)
             val page = fa.post("/msg/send/", listOf("key" to key, "to" to to.trim(), "subject" to subject, "message" to message))
             val doc = page.document
             // Back on the notes page means sent; anything else is FA explaining why not.
@@ -142,10 +143,10 @@ class NotesRepository(private val fa: FaClient) {
                 // The key may be what FA didn't like (they go stale): the next try gets a fresh one.
                 sendKey = null
                 SystemMessageParser.message(doc) ?: doc.selectFirst(".notice-message, .error, .redirect-message")?.text()?.trim()
-                    ?.ifEmpty { null } ?: "Fur Affinity didn't confirm the note was sent."
+                    ?.ifEmpty { null } ?: Words.get(Words.Text.NoteUnconfirmed)
             }
         } catch (e: IOException) {
-            e.message ?: "Network error"
+            e.message ?: Words.get(Words.Text.Network)
         }
     }
 
