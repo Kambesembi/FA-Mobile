@@ -1,5 +1,6 @@
 package com.kambesembi.famobile.data.update
 
+import com.kambesembi.famobile.data.Words
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.Dispatchers
@@ -74,7 +75,7 @@ object UpdateCheck {
                     response.code == 404 -> UpdateState.NotPublic
                     !response.isSuccessful -> UpdateState.Failed("HTTP ${response.code}")
                     else -> {
-                        val release = parse(response.body?.string().orEmpty()) ?: return@use UpdateState.Failed("Unreadable answer")
+                        val release = parse(response.body?.string().orEmpty()) ?: return@use UpdateState.Failed(Words.get(Words.Text.UpdateUnreadable))
                         if (newer(release.version, current)) UpdateState.Available(release) else UpdateState.UpToDate
                     }
                 }

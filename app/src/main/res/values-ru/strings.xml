@@ -555,4 +555,21 @@
     <string name="fa_settings_save">Сохранить</string>
     <string name="fa_settings_cancel">Отмена</string>
     <string name="fa_settings_tag_add">Добавить тег</string>
+    <!-- Fallback messages of the data layer, and the background check's own notification. -->
+    <string name="words_page_unreadable">Не удалось прочитать страницу Fur Affinity</string>
+    <string name="words_unexpected_page">Fur Affinity прислал неожиданную страницу</string>
+    <string name="words_no_submission">Эту работу нельзя показать.</string>
+    <string name="words_no_profile">Не удалось прочитать страницу пользователя.</string>
+    <string name="words_no_journal">Этот журнал нельзя показать.</string>
+    <string name="words_no_note">Не удалось показать эту заметку.</string>
+    <string name="words_note_prepare">Не удалось подготовить заметку. Попробуйте ещё раз.</string>
+    <string name="words_note_unconfirmed">Fur Affinity не подтвердил отправку заметки.</string>
+    <string name="words_setting_on_fa">Эту настройку нельзя изменить в приложении; используйте «Изменить на FA».</string>
+    <string name="words_setting_refused">Fur Affinity не принял изменение.</string>
+    <string name="words_slow_down">Fur Affinity просит не спешить; попробуйте чуть позже.</string>
+    <string name="words_update_unreadable">Не удалось прочитать ответ GitHub</string>
+    <string name="channel_status">Состояние приложения</string>
+    <string name="check_stopped_title">FA Mobile не может проверять новости</string>
+    <string name="check_stopped_logged_out">Вы вышли из аккаунта. Откройте приложение и войдите снова.</string>
+    <string name="check_stopped_challenge">Fur Affinity просит пройти короткую проверку. Откройте приложение, чтобы продолжить.</string>
 </resources>

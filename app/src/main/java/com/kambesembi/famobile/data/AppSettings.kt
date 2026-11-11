@@ -41,6 +41,7 @@ class AppSettings(private val context: Context) {
     private val updateChecksKey = booleanPreferencesKey("update_checks")
     private val comicHorizontalKey = booleanPreferencesKey("comic_horizontal")
     private val notifiedUpdateKey = stringPreferencesKey("notified_update")
+    private val troubleKey = intPreferencesKey("check_trouble")
 
     val theme: Flow<ThemeMode> = context.dataStore.data.map { prefs ->
         prefs[themeKey]?.let { runCatching { ThemeMode.valueOf(it) }.getOrNull() } ?: ThemeMode.System
@@ -105,6 +106,13 @@ class AppSettings(private val context: Context) {
 
     suspend fun setSeenCounts(counts: Counts) {
         context.dataStore.edit { it[seenKey] = ActivityCheck.encode(counts) }
+    }
+
+    /** Background checks in a row that couldn't look (logged out, or Cloudflare wants its check); 0 when all is well. */
+    suspend fun checkTrouble(): Int = context.dataStore.data.first()[troubleKey] ?: 0
+
+    suspend fun setCheckTrouble(count: Int) {
+        if (checkTrouble() != count) context.dataStore.edit { it[troubleKey] = count }
     }
 
     /** Whether the app already asked for the notification permission once (Android 13+). */

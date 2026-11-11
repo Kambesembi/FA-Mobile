@@ -22,12 +22,12 @@ internal suspend fun <T> FaClient.postReply(
     ids: (T) -> Set<Long>,
     keep: (T) -> Unit,
 ): PostOutcome<T> {
-    val answer = parse(post(form.path, form.submit(text, replyTo)).document)
+    val answer = parsed(post(form.path, form.submit(text, replyTo)), parse)
     answer.page?.let(keep)
     if (answer.page != null && (ids(answer.page) - before).isNotEmpty()) return PostOutcome.Posted(answer.page)
     // FA's message instead of the page: that's its reason (too short, too fast, …).
     if (answer.page == null && answer.message != null) return PostOutcome.Failed(answer.message)
-    val again = parse(page(reloadPath).document)
+    val again = parsed(page(reloadPath), parse)
     again.page?.let(keep)
     return if (again.page != null && (ids(again.page) - before).isNotEmpty()) {
         PostOutcome.Posted(again.page)

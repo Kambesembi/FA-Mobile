@@ -1,5 +1,6 @@
 package com.kambesembi.famobile.data.parse
 
+import com.kambesembi.famobile.data.Words
 import com.kambesembi.famobile.data.model.Comment
 import com.kambesembi.famobile.data.model.FavState
 import com.kambesembi.famobile.data.model.Rating
@@ -15,7 +16,7 @@ object SubmissionParser {
 
     fun parse(doc: Document, id: Long): SubmissionResult {
         val page = doc.selectFirst("#submission_page")
-            ?: return SubmissionResult.Unavailable(SystemMessageParser.message(doc) ?: "This submission can't be shown.")
+            ?: return SubmissionResult.Unavailable(SystemMessageParser.message(doc) ?: Words.get(Words.Text.NoSubmission))
 
         val artist = artist(doc) ?: UserRef("", "")
         val img = doc.selectFirst("img#submissionImg")

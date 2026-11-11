@@ -198,6 +198,11 @@ private fun LoggedIn(container: AppContainer, state: SessionState.LoggedIn, star
 
     fun openUser(name: String) = nav.navigate("user/${name.lowercase()}")
 
+    // The viewer at [id], swiping through [ids]: the list waits in the container, the route has its ticket.
+    fun openList(ids: List<Long>, id: Long) {
+        if (ids.size <= 1) nav.navigate("viewer/$id/$id") else nav.navigate("viewer-list/${container.viewerLists.put(ids)}/$id")
+    }
+
     // A link in FA text: submissions and user pages open in the app, everything else outside after asking.
     var outsideLink by rememberSaveable { mutableStateOf<String?>(null) }
     fun openLink(url: String) {
@@ -311,7 +316,7 @@ private fun LoggedIn(container: AppContainer, state: SessionState.LoggedIn, star
         repo = container.submissions,
         scope = scope,
         userAgent = container.userAgent,
-        openSubmissions = { ids, id -> nav.navigate("viewer/${ids.joinToString(",")}/$id") },
+        openSubmissions = ::openList,
         openUser = ::openUser,
         openJournal = { id -> nav.navigate("journal/$id") },
         saved = container.settings.savedSubmissions,
@@ -386,7 +391,7 @@ private fun LoggedIn(container: AppContainer, state: SessionState.LoggedIn, star
                             search = { query, customized -> scope.launch { container.explore.search(query, customized) } },
                             browse = { filters -> scope.launch { container.explore.browse(filters) } },
                             closeSearch = { scope.launch { container.explore.closeSearch() } },
-                            openSubmissions = { ids, id -> nav.navigate("viewer/${ids.joinToString(",")}/$id") },
+                            openSubmissions = { _, id -> nav.navigate("explore-viewer/$id") },
                             openUser = ::openUser,
                         ),
                         startTab = start.tab,
@@ -465,6 +470,35 @@ private fun LoggedIn(container: AppContainer, state: SessionState.LoggedIn, star
                         .split(',').mapNotNull { it.toLongOrNull() }.ifEmpty { listOf(id) }
                     ViewerScreen(ids = ids, startId = id, actions = viewerActions())
                 }
+                composable(
+                    "viewer-list/{ticket}/{id}",
+                    arguments = listOf(
+                        navArgument("ticket") { type = NavType.LongType },
+                        navArgument("id") { type = NavType.LongType },
+                    ),
+                ) { entry ->
+                    val id = entry.arguments?.getLong("id") ?: 0L
+                    val ticket = entry.arguments?.getLong("ticket") ?: 0L
+                    val ids = remember(ticket) { container.viewerLists.get(ticket)?.takeIf { id in it } ?: listOf(id) }
+                    ViewerScreen(ids = ids, startId = id, actions = viewerActions())
+                }
+                composable(
+                    "explore-viewer/{id}",
+                    arguments = listOf(navArgument("id") { type = NavType.LongType }),
+                ) { entry ->
+                    val id = entry.arguments?.getLong("id") ?: 0L
+                    // The results as they are now: swiping on past the last one loads the next page.
+                    val shown = remember(explore.items, contentFilter) {
+                        explore.items.filterNot { contentFilter.hides(it) }.map { it.id }
+                    }
+                    val ids = if (id in shown) shown else listOf(id)
+                    ViewerScreen(
+                        ids = ids,
+                        startId = id,
+                        actions = viewerActions(),
+                        onNearEnd = if (explore.hasNext && id in shown) ({ scope.launch { container.explore.loadMore() } }) else null,
+                    )
+                }
                 composable("comic/{id}", arguments = listOf(navArgument("id") { type = NavType.LongType })) { entry ->
                     val id = entry.arguments?.getLong("id") ?: 0L
                     ComicScreen(
@@ -516,7 +550,7 @@ private fun LoggedIn(container: AppContainer, state: SessionState.LoggedIn, star
                         shout = entry.arguments?.getString("shout")?.toLongOrNull(),
                         repo = container.profiles,
                         actions = ProfileActions(
-                            openSubmissions = { ids, id -> nav.navigate("viewer/${ids.joinToString(",")}/$id") },
+                            openSubmissions = ::openList,
                             openLink = ::openLink,
                             writeNote = { to -> nav.navigate("compose-to/$to") },
                             openJournal = { id -> nav.navigate("journal/$id") },
@@ -541,7 +575,7 @@ private fun LoggedIn(container: AppContainer, state: SessionState.LoggedIn, star
                         submissions = submissions,
                         artists = artists,
                         actions = SavedActions(
-                            openSubmissions = { ids, id -> nav.navigate("viewer/${ids.joinToString(",")}/$id") },
+                            openSubmissions = ::openList,
                             openUser = ::openUser,
                             removeSubmission = { item -> scope.launch { container.settings.toggleSavedSubmission(item) } },
                             removeArtist = { artist -> scope.launch { container.settings.toggleSavedArtist(artist) } },

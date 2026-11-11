@@ -98,7 +98,13 @@ class AppContainer(private val app: Application) {
      * Where the background upload talks to FA: its own connection (the login cookies are shared), so
      * a big file never holds up the pages the app loads. The demo has only its saved pages.
      */
-    fun uploadSource(): PageSource = if (isDemo) source else LiveSource(userAgent)
+    fun uploadSource(): PageSource = if (isDemo) source else background
+
+    /** One connection for everything the background work asks FA (uploads, the check for news), kept for the app's life. */
+    val background: LiveSource by lazy { LiveSource(userAgent) }
+
+    /** The viewer's lists of submissions, by ticket. */
+    val viewerLists = com.kambesembi.famobile.ui.viewer.ViewerLists()
 
     private val _screenRequest = MutableStateFlow<String?>(null)
 
@@ -166,6 +172,7 @@ class AppContainer(private val app: Application) {
                 if (header.user != null) {
                     uploads.setAccount(header.user.username)
                     settings.setSeenCounts(header.counts)
+                    settings.setCheckTrouble(0)
                     Notifier.clear(app)
                     // The app's SFW choice wins: after a new login FA's cookie is gone, so set it again.
                     val sfw = settings.sfw.first()
@@ -176,7 +183,7 @@ class AppContainer(private val app: Application) {
     }
 
     fun logout() {
-        session.logout()
+        scope.launch { session.logout() }
         inbox.clear()
         activity.clear()
         notes.clear()
