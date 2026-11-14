@@ -11,6 +11,12 @@ submission ids (which would show whose art the account watches) don't.
 - the logout form, CSRF-like keys and the banner are neutralised
 - submission ids become made-up ones (10000010, 10000020, …) in the same order, also in thumbnail
   and file URLs
+- so do journal and comment ids, upload and avatar timestamps and the exact times in date tooltips
+- keywords become keyword1, keyword2, …; theme and species become "All" / "Unspecified / Any";
+  gallery sizes, picture sizes and the server time get fixed values. Any one of these, with the day
+  the page was saved, is enough to find the real submission on FA.
+
+Re-running it on a page in fixtures/ is safe: made-up values are left as they are.
 
 Only the Python standard library is used.
 """
@@ -133,7 +139,7 @@ def scrub(html: str) -> str:
         html = re.sub(rf"(?<![A-Za-z0-9_]){re.escape(name)}(?![A-Za-z0-9_])", repl, html, flags=re.I)
     # Display names keep FA's leading/trailing spaces in titles; normalise the obvious leftovers.
     html = re.sub(r"u_[a-z0-9_.-]+", lambda m: m.group(0) if m.group(0)[2:] in mapping.values() else "u_artist", html)
-    return fake_ids(html)
+    return fake_traces(fake_ids(html))
 
 
 def fake_ids(html: str) -> str:
@@ -145,9 +151,71 @@ def fake_ids(html: str) -> str:
     return re.sub(r"(?<!\d)(" + "|".join(map(re.escape, fake)) + r")(?!\d)", lambda m: fake[m.group(1)], html)
 
 
+def _made_up(number: str) -> bool:
+    """Values this script or a hand-written page chose: 1700000000-ish, or with a run of zeros."""
+    return "0000" in number or number.startswith("1700000")
+
+
+def _remap(html: str, found: set[str], make) -> str:
+    fake = {old: make(n) for n, old in enumerate(sorted(found, key=int))}
+    if not fake:
+        return html
+    return re.sub(r"(?<!\d)(" + "|".join(map(re.escape, fake)) + r")(?!\d)", lambda m: fake[m.group(1)], html)
+
+
+def _system_tag(tag: str) -> str:
+    """Theme and species narrow a day's uploads down to a handful: generic ones instead."""
+    return "t_all" if tag.startswith("t_") else "s_unspecified_any" if tag.startswith("s_") else tag
+
+
+def fake_traces(html: str) -> str:
+    """What still leads back to real submissions once names and ids are gone."""
+    # Journal and comment ids: a real journal id opens a real journal, and so names its author.
+    journals = {i for i in re.findall(r'(?:/journal/|journals\[\]" value=")(\d{5,})', html) if not _made_up(i)}
+    html = _remap(html, journals, lambda n: str(11100001 + n))
+    comments = {i for i in re.findall(r'(?:cid:|replyto/journal/|name="replyto" value="|data-comment-id=")(\d{5,})', html)
+                if not _made_up(i)}
+    html = _remap(html, comments, lambda n: str(60000101 + n))
+    # Unix times (uploads in file and thumbnail URLs, avatar changes, data-time): made-up ones in the
+    # same order, so a "posted" time still matches its file name.
+    times = {t for t in re.findall(r"(?<!\d)(1[6-9]\d{8})(?!\d)", html) if int(t) % 1000 and not _made_up(t)}
+    html = _remap(html, times, lambda n: str(1791010000 + 10000 * n))
+    html = re.sub(r"(a\.furaffinity\.net/)(\d{8})/", lambda m: m.group(1) + (m.group(2) if _made_up(m.group(2)) else "1700000004") + "/", html)
+    html = re.sub(r'(class="popup_date"[^>]*\btitle=")([A-Z][a-z]+ \d{1,2}, \d{4})[^"]*', r"\g<1>\2", html)
+    # Keywords: the artist's own words. Kept in order, as keyword1, keyword2, …
+    words: dict[str, str] = {}
+
+    def word(w: str) -> str:
+        if re.match(r"^[ucts]_", w):
+            return _system_tag(w)
+        if re.fullmatch(r"keyword\d+", w):
+            return w
+        return words.setdefault(w.lower(), f"keyword{len(words) + 1}")
+
+    html = re.sub(r'data-tags="([^"]*)"', lambda m: 'data-tags="' + " ".join(word(w) for w in m.group(1).split()) + '"', html)
+    html = re.sub(r'(/search/@keywords )([^"<]+)(")([^>]*>)([^<]*)(<)',
+                  lambda m: m.group(1) + word(m.group(2)) + m.group(3) + m.group(4) + word(m.group(5)) + m.group(6), html)
+    html = re.sub(r'(data-tag-name="|<span class="tag-invalid">)([^"<]+)', lambda m: m.group(1) + word(m.group(2)), html)
+    # The submission's theme and species in its details box (the select lists of a form stay).
+    html = re.sub(r'(<div class="info text">.*?</section>)', lambda m: re.sub(
+        r"(<span[^>]*>\s*(?:Theme|Species)\s*</span>\s*<span>)[^<]*",
+        lambda s: s.group(1) + ("All" if "Theme" in s.group(1) else "Unspecified / Any"), m.group(1), flags=re.S), html, flags=re.S)
+    # Sizes that fit one real upload or gallery only.
+    html = re.sub(r"<i>\d+ submissions", "<i>120 submissions", html)
+    html = re.sub(r"<span>\d+ x \d+</span>", "<span>2000 x 1600</span>", html)
+    html = re.sub(r"<span>\d+(?:\.\d+)? [kKM]B</span>", "<span>400.0 kB</span>", html)
+    html = re.sub(r"(Server Time: )[^<]*", r"\1Oct 1, 2026 12:00 PM", html)
+    return html
+
+
 def main() -> None:
     src, dst = sys.argv[1], sys.argv[2]
     html = open(src, encoding="utf-8").read()
+    if re.search(r"Test page scrubbed by tools/scrub_fixture\.py|<!-- Hand-built test page", html[:600]):
+        # A page in fixtures/ already: only the later passes, so its made-up names stay as they are.
+        open(dst, "w", encoding="utf-8", newline="\n").write(fake_traces(html))
+        print(f"{dst}: scrubbed again")
+        return
     out = scrub(html)
     note = f"<!-- Test page scrubbed by tools/scrub_fixture.py from a page saved on FA; names and texts are replaced. -->\n"
     out = re.sub(r"(<!DOCTYPE html>\s*)", lambda m: m.group(1) + note, out, count=1, flags=re.I) if "<!DOCTYPE" in out[:200].upper() else note + out

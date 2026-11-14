@@ -357,7 +357,10 @@ PayPal address are not offered.
 
 - Raw pages saved from the account go to `local/fixtures/` (git-ignored). A scrub script writes
   anonymised copies (usernames, note/comment text, avatars, IDs of private items replaced) to
-  `fixtures/`, and only those are committed. The parser unit tests run on those in CI.
+  `fixtures/`, and only those are committed. Besides names and ids it replaces whatever, together with
+  the day a page was saved, would still find the real submission on FA: journal and comment ids,
+  upload and avatar times, keywords, theme and species, gallery and picture sizes. Run on a page
+  already in `fixtures/` it only applies those later passes. The parser unit tests run on those in CI.
 - A **demo mode** that loads those saved pages, so CI can take screenshots on the emulator without logging in.
 - Real-account testing happens on your phone with each APK.
 
