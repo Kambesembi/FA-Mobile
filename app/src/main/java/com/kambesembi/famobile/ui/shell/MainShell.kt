@@ -160,6 +160,7 @@ class ActivityTab(
     val refresh: () -> Unit,
     val remove: (ActivityItem) -> Unit,
     val clear: (ActivitySection) -> Unit,
+    val clearAll: () -> Unit = {},
     val open: (ActivityItem) -> Unit,
     val openUser: (String) -> Unit = {},
 )
@@ -192,6 +193,7 @@ fun MainShell(
     val errorMessage = state.error?.let { errorText(it) }
     var selection by remember { mutableStateOf(emptySet<Long>()) }
     var confirmClear by remember { mutableStateOf(false) }
+    var confirmClearActivity by remember { mutableStateOf(false) }
     val selecting = tab == Tab.Inbox && selection.isNotEmpty()
     val filter = LocalContentFilter.current
     val quickWorking = LocalQuickActions.current?.working?.collectAsStateWithLifecycle()?.value ?: 0
@@ -323,6 +325,11 @@ fun MainShell(
                                 Icon(Icons.Outlined.DeleteSweep, contentDescription = stringResource(R.string.inbox_clear_all))
                             }
                         }
+                        if (tab == Tab.Activity && activity.state.sections.isNotEmpty()) {
+                            IconButton(onClick = { confirmClearActivity = true }, enabled = !activity.state.removing) {
+                                Icon(Icons.Outlined.DeleteSweep, contentDescription = stringResource(R.string.activity_clear_all))
+                            }
+                        }
                         UploadButton(uploads, onClick = if (uploads.active > 0) onOpenUploads else onUpload)
                         AccountButton(state.user, onOpenSettings, onOpenProfile, onOpenSaved, onLogout, onOpenUploads)
                     },
@@ -400,6 +407,21 @@ fun MainShell(
         if (inbox.state.removing || activity.state.removing || quickWorking > 0) {
             Box(Modifier.padding(padding).fillMaxWidth()) { LinearProgressIndicator(Modifier.fillMaxWidth()) }
         }
+    }
+
+    if (confirmClearActivity) {
+        AlertDialog(
+            onDismissRequest = { confirmClearActivity = false },
+            title = { Text(stringResource(R.string.activity_clear_title)) },
+            text = { Text(stringResource(R.string.activity_clear_body)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmClearActivity = false
+                    activity.clearAll()
+                }) { Text(stringResource(R.string.clear)) }
+            },
+            dismissButton = { TextButton(onClick = { confirmClearActivity = false }) { Text(stringResource(R.string.cancel)) } },
+        )
     }
 
     if (confirmClear) {

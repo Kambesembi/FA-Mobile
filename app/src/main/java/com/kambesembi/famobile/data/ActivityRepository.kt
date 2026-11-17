@@ -54,6 +54,15 @@ class ActivityRepository(private val fa: FaClient) {
         return submit(listOf(nuke.name to nuke.value)) { sections -> sections.filter { it.sectionId != section.sectionId } }
     }
 
+    /** Every section, one after the other as FA's own buttons do it; false if one didn't go through. */
+    suspend fun clearAll(): Boolean {
+        var ok = true
+        for (section in _state.value.sections.toList()) {
+            if (!clear(section)) ok = false
+        }
+        return ok
+    }
+
     private suspend fun submit(form: List<Pair<String, String>>, apply: (List<ActivitySection>) -> List<ActivitySection>): Boolean {
         _state.update { it.copy(removing = true, error = null) }
         return try {

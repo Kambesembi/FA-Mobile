@@ -1,18 +1,24 @@
 package com.kambesembi.famobile.ui.viewer
 
+import android.os.Build
+import android.view.ViewGroup
+import android.view.WindowManager
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -26,22 +32,46 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.window.DialogWindowProvider
+import androidx.core.view.WindowCompat
 import coil.compose.AsyncImage
 import coil.compose.SubcomposeAsyncImage
 import com.kambesembi.famobile.R
 
-/** Full-screen image: pinch to zoom, drag to pan, double-tap to zoom in at that spot or back out. */
+/**
+ * Full-screen image: pinch to zoom, drag to pan, double-tap to zoom in at that spot or back out. The
+ * picture fits between the system bars and the camera cutout, so none of it is hidden.
+ */
 @Composable
 fun ZoomImage(url: String, previewUrl: String?, description: String, onDismiss: () -> Unit) {
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
     ) {
+        // The dialog's own window, over the whole screen: without this Android lays it out below a
+        // camera cutout but keeps the screen's height, so its bottom part is cut off.
+        val view = LocalView.current
+        SideEffect {
+            (view.parent as? DialogWindowProvider)?.window?.let { window ->
+                window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+                WindowCompat.setDecorFitsSystemWindows(window, false)
+                if (Build.VERSION.SDK_INT >= 28) {
+                    window.attributes = window.attributes.apply {
+                        layoutInDisplayCutoutMode = if (Build.VERSION.SDK_INT >= 30) {
+                            WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+                        } else {
+                            WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+                        }
+                    }
+                }
+            }
+        }
         var size by remember { mutableStateOf(IntSize.Zero) }
         var scale by remember { mutableFloatStateOf(1f) }
         var offset by remember { mutableStateOf(Offset.Zero) }
@@ -56,6 +86,7 @@ fun ZoomImage(url: String, previewUrl: String?, description: String, onDismiss: 
             Modifier
                 .fillMaxSize()
                 .background(Color.Black)
+                .windowInsetsPadding(WindowInsets.safeDrawing)
                 .onSizeChanged {
                     // Turned or resized: the picture fits the new screen again.
                     if (size != IntSize.Zero && it != size) {
@@ -108,7 +139,6 @@ fun ZoomImage(url: String, previewUrl: String?, description: String, onDismiss: 
                 onClick = onDismiss,
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .safeDrawingPadding()
                     .padding(8.dp)
                     .background(Color(0x66000000), CircleShape),
             ) {

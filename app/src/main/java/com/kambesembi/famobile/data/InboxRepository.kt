@@ -20,6 +20,8 @@ data class InboxState(
     /** A removal is on its way to FA. */
     val removing: Boolean = false,
     val error: String? = null,
+    /** Goes up with each reload of the first page, so the grid knows to go back to the top. */
+    val generation: Int = 0,
 ) {
     val ids: List<Long> get() = items.map { it.preview.id }
 }
@@ -37,7 +39,9 @@ class InboxRepository(private val fa: FaClient) {
         loading.withLock {
             try {
                 val page = fa.read(FIRST_PAGE) { InboxParser.parse(it) }
-                _state.update { it.copy(items = page.items, nextPath = page.nextPath, loaded = true, refreshing = false) }
+                _state.update {
+                    it.copy(items = page.items, nextPath = page.nextPath, loaded = true, refreshing = false, generation = it.generation + 1)
+                }
             } catch (e: IOException) {
                 _state.update { it.copy(refreshing = false, error = e.message ?: Words.get(Words.Text.Network)) }
             }

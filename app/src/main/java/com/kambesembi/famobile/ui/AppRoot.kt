@@ -365,6 +365,7 @@ private fun LoggedIn(container: AppContainer, state: SessionState.LoggedIn, star
                             refresh = { scope.launch { container.activity.refresh() } },
                             remove = { item -> scope.launch { container.activity.remove(listOf(item)) } },
                             clear = { section -> scope.launch { container.activity.clear(section) } },
+                            clearAll = { scope.launch { container.activity.clearAll() } },
                             open = { item ->
                                 if (item.kind == ActivityKind.Shouts) {
                                     // A shout is on your own page: open that, at the shout.

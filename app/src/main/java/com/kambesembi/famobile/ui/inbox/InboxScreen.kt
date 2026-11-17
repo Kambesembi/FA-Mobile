@@ -34,7 +34,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -92,6 +95,16 @@ private fun Grid(
     val loadMore by rememberUpdatedState(onLoadMore)
     val total = state.items.size
     ScrollTopOnReload(state.refreshing) { gridState.scrollToItem(0) }
+
+    // A reload (pull, a notification, coming back to the app) starts at the newest again. The shown
+    // generation is saved with the scroll position, so a position restored onto a newer list goes too.
+    var shownGeneration by rememberSaveable { mutableIntStateOf(state.generation) }
+    LaunchedEffect(state.generation) {
+        if (state.generation != shownGeneration) {
+            gridState.scrollToItem(0)
+            shownGeneration = state.generation
+        }
+    }
 
     // Infinite scroll: ask for the next page while a dozen thumbnails are still ahead.
     LaunchedEffect(gridState, total) {
