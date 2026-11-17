@@ -107,8 +107,8 @@
     <string name="inbox_clear_title">Den ganzen Eingang leeren?</string>
     <string name="inbox_clear_body">Alle Einreichungen verlassen deinen Eingang, auch die noch nicht geladenen. Auf Fur Affinity selbst bleiben sie erhalten.</string>
     <string name="activity_clear_all">Alle Benachrichtigungen löschen</string>
-    <string name="activity_clear_title">Alle Benachrichtigungen löschen?</string>
-    <string name="activity_clear_body">Damit verschwinden alle Benachrichtigungen zu Watches, Kommentaren, Favoriten, Journals und Shouts aus deinem FA-Posteingang. Die Werke, Kommentare und Journals selbst bleiben auf FA.</string>
+    <string name="activity_clear_all_title">Alle Benachrichtigungen löschen?</string>
+    <string name="activity_clear_all_body">Damit verschwinden alle Benachrichtigungen zu Watches, Kommentaren, Favoriten, Journals und Shouts aus deinem FA-Posteingang. Die Werke, Kommentare und Journals selbst bleiben auf FA.</string>
     <string name="clear">Leeren</string>
     <string name="more_options">Weitere Optionen</string>
     <string name="close">Schließen</string>

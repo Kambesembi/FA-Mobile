@@ -111,8 +111,8 @@
     <string name="inbox_clear_title">Очистить всю ленту?</string>
     <string name="inbox_clear_body">Все работы уйдут из ленты, включая ещё не загруженные. На самом Fur Affinity они останутся.</string>
     <string name="activity_clear_all">Очистить все уведомления</string>
-    <string name="activity_clear_title">Очистить все уведомления?</string>
-    <string name="activity_clear_body">Все уведомления о подписках, комментариях, избранном, журналах и шаутах будут удалены из вашего центра сообщений FA. Сами работы, комментарии и журналы останутся на FA.</string>
+    <string name="activity_clear_all_title">Очистить все уведомления?</string>
+    <string name="activity_clear_all_body">Все уведомления о подписках, комментариях, избранном, журналах и шаутах будут удалены из вашего центра сообщений FA. Сами работы, комментарии и журналы останутся на FA.</string>
     <string name="clear">Очистить</string>
     <string name="more_options">Ещё</string>
     <string name="close">Закрыть</string>

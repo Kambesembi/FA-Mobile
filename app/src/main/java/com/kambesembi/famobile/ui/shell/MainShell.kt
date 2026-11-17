@@ -412,8 +412,8 @@ fun MainShell(
     if (confirmClearActivity) {
         AlertDialog(
             onDismissRequest = { confirmClearActivity = false },
-            title = { Text(stringResource(R.string.activity_clear_title)) },
-            text = { Text(stringResource(R.string.activity_clear_body)) },
+            title = { Text(stringResource(R.string.activity_clear_all_title)) },
+            text = { Text(stringResource(R.string.activity_clear_all_body)) },
             confirmButton = {
                 TextButton(onClick = {
                     confirmClearActivity = false

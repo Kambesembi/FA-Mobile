@@ -110,8 +110,8 @@
     <string name="inbox_clear_title">Clear the whole inbox?</string>
     <string name="inbox_clear_body">Every submission leaves your inbox, including pages not loaded yet. They stay on Fur Affinity itself.</string>
     <string name="activity_clear_all">Clear all notifications</string>
-    <string name="activity_clear_title">Clear all notifications?</string>
-    <string name="activity_clear_body">This removes every watch, comment, favorite, journal and shout notification from your FA inbox. The submissions, comments and journals themselves stay on FA.</string>
+    <string name="activity_clear_all_title">Clear all notifications?</string>
+    <string name="activity_clear_all_body">This removes every watch, comment, favorite, journal and shout notification from your FA inbox. The submissions, comments and journals themselves stay on FA.</string>
     <string name="clear">Clear</string>
     <string name="more_options">More options</string>
     <string name="close">Close</string>
